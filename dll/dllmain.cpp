@@ -53,10 +53,6 @@ uintptr_t GetModuleBaseAddress(DWORD procId, const wchar_t* modName)
 
 uintptr_t moduleBase = GetModuleBaseAddress(procId, L"GameLogic.dll");
 
-
-
-
-////////////////////////////////////////////////////////////////canjump///////////////////////
 typedef bool(__thiscall* OriginalCanJump)(void* thisPtr);
 OriginalCanJump trampolineCanJump = nullptr;
 
@@ -89,78 +85,45 @@ void InitializeHooks() {
 	HookCanJump();
 	// Any other initialization code can go here
 }
-////////////////////////////////////////////////////////////////canjump///////////////////////
 
 
-
-
-
-/* idk what im doing
-
-typedef struct {
-	float x;
-	float y;
-	float z;
-} Vector;
-
-void ConstructVector3(Vector* vec, float x, float y, float z) {
-
-	uintptr_t vec3 = (uintptr_t)moduleBase + 0x00014A0;
-
-    __asm {
-        mov ecx, vec 
-        movss xmm0, x
-        movss xmm1, y
-        movss xmm2, z 
-        call vec3
-    }
-}
-void spawn_actor_with_id(char* actor, unsigned int id, Vector* pos, Vector* rotation) {
-
-
-	uintptr_t fn_spawn_actor_with_id = (uintptr_t)moduleBase + 0x636c0;
-	uintptr_t world = (uintptr_t)moduleBase + 0x00097d7c;
-
-	char* game_world = (char*)world;
-
-	__asm {
-		mov eax, rotation
-		push eax
-		mov eax, pos
-		push eax
-		mov eax, actor
-		push eax
-		mov eax, id
-		push eax
-		mov ecx, game_world
-		mov eax, fn_spawn_actor_with_id
-		call eax
-	}
-}
-
-*/
 
 // This method defines a threat that will run concurrently with the game
 DWORD WINAPI MyThread(HMODULE hModule)
 {
-	// The following 3 lines enable a writable console
-	// We don't actually need a console here, but it is very useful to print debugging information to. 
+	//Console setup. 
 	AllocConsole();
 	FILE* f = new FILE;
 	freopen_s(&f, "CONOUT$", "w", stdout);
 
 	std::cout << "Injection worked\n";
 	std::cout << "Process ID is: " << GetCurrentProcessId() << std::endl;
-	// We can see by looking at the process ID in process explorer that this code is being run by the process it was injected into. 
-
-
-	// From cheat engine analysis we know that
-	// z_coord is at memory address: [[[["PwnAdventure3-Win32-Shipping.exe"+018FCD60] + 20 ] + 238 ] + 280 ] + 98 
-	// This code follows that pointer path
-	//
-	// NB this may lead trying to dereference null pointers or reading memory you don't have access to.
-	// In other module you would be expected to catch and handle these possible errors 
+	//module name
 	uintptr_t PwnAventAddr = (uintptr_t)GetModuleHandle(L"PwnAdventure3-Win32-Shipping.exe");
+
+	uintptr_t manaPointerOffset = 0x18FCD60;  // Offset for the mana pointer
+
+	// Adding offsets one by one
+	printf("PwnAventAddr: %p\n", PwnAventAddr);
+
+	uintptr_t firstPointer = *(uintptr_t*)(PwnAventAddr + manaPointerOffset);
+	printf("PwnAventAddr + 0x18FCD60 = %p has value %p\n", PwnAventAddr + manaPointerOffset, firstPointer);
+
+	uintptr_t secondPointer = *(uintptr_t*)(firstPointer + 0x20);
+	printf("firstPointer + 0x20 = %p has value %p\n", firstPointer + 0x20, secondPointer);
+
+	uintptr_t thirdPointer = *(uintptr_t*)(secondPointer + 0x284);
+	printf("secondPointer + 0x284 = %p has value %p\n", secondPointer + 0x284, thirdPointer);
+
+	uintptr_t fourthPointer = *(uintptr_t*)(thirdPointer + 0x3E0);
+	printf("thirdPointer + 0x3E0 = %p has value %p\n", thirdPointer + 0x3E0, fourthPointer);
+
+	int* manaValue = (int*)(fourthPointer + 0xBC);
+	printf("fourthPointer + 0xBC = %p has value %d\n", fourthPointer + 0xBC, *manaValue);
+	std::cout << "mana: " << *manaValue << std::endl;
+
+	
+	//Teachers lecture
 	printf("PwnAventAddr: %p\n", PwnAventAddr);
 	uintptr_t firstStep = *(uintptr_t*)(PwnAventAddr + 0x18FCD60);
 	printf("PwnAventAddr + 0x18FCD60 = %p has value %p\n", PwnAventAddr + 0x18FCD60, firstStep);
@@ -174,6 +137,8 @@ DWORD WINAPI MyThread(HMODULE hModule)
 	float* z_coord_Address = (float*)(forthStep + 0x98);
 	float z_coord = *z_coord_Address;
 
+
+
 	// This is the main loop that will run in the background while I play the game
 	while (true) {
 		// If the player z coordinate (height) changes then print it.
@@ -185,25 +150,7 @@ DWORD WINAPI MyThread(HMODULE hModule)
 		// If the player presses 'F' then add 10000 to the players heigth
 		// I.e. this makes 'F' a super jump key that will let me jump through solid objects 
 		if (GetAsyncKeyState('F') & 1) {
-			std::cout << "   F key pressed";				
-		/*	float zAxisValue = *(float*)LocateDirectMemoryAddress(moduleBase + 0x00097D7C, {0x1C, 0x4, 0x4c, 0x38, 0x8, 0x54, 0x98});
-			float yAxisValue = *(float*)LocateDirectMemoryAddress(moduleBase + 0x00097D7C, { 0x1C, 0x4, 0x4c, 0x38, 0x8, 0x54, 0x94 });
-			float xAxisValue = *(float*)LocateDirectMemoryAddress(moduleBase + 0x00097D7C, { 0x1C, 0x4, 0x4c, 0x38, 0x8, 0x54, 0x90 });
-			printf("%f",zAxisValue);
-			printf("%f", yAxisValue);
-			printf("%f", xAxisValue);
-
-
-			Vector vector = {xAxisValue,yAxisValue,zAxisValue};
-			Vector vector2 = {0.0f, 0.0f, 0.0f};
-			uintptr_t bear1 = *(uintptr_t*)(moduleBase + 0x0006011);
-
-			char* bear = (char*)(bear1);
-		
-
-			spawn_actor_with_id(bear,99,&vector, &vector2);
-
-			*/
+			std::cout << "   F key pressed";
 			*z_coord_Address = *z_coord_Address + 10000;
 		}
 
@@ -211,9 +158,7 @@ DWORD WINAPI MyThread(HMODULE hModule)
 	}
 	return 0;
 }
-
-
-
+//Teachers lecture done
 
 // This is the main method that runs when the DLL is injected.
 BOOL APIENTRY DllMain(HMODULE hModule,
@@ -230,7 +175,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 		// We run the cheat code in a seperate thread to stop it interupting the game execution. 
 		// Again we dont catch a possible NULL, if we are going down then we can go down in flames. 
 		CloseHandle(CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)MyThread, hModule, 0, nullptr));
-		break; 
+		break;
 	}
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
