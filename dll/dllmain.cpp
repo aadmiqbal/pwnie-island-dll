@@ -86,8 +86,6 @@ void InitializeHooks() {
 	// Any other initialization code can go here
 }
 
-
-
 // This method defines a threat that will run concurrently with the game
 DWORD WINAPI MyThread(HMODULE hModule)
 {
@@ -98,14 +96,15 @@ DWORD WINAPI MyThread(HMODULE hModule)
 
 	std::cout << "Injection worked\n";
 	std::cout << "Process ID is: " << GetCurrentProcessId() << std::endl;
-	//module name
+
+	//Mana hack start
 	uintptr_t PwnAventAddr = (uintptr_t)GetModuleHandle(L"PwnAdventure3-Win32-Shipping.exe");
-
-	uintptr_t manaPointerOffset = 0x18FCD60;  // Offset for the mana pointer
-
-	// Adding offsets one by one
 	printf("PwnAventAddr: %p\n", PwnAventAddr);
 
+	// Offset for the mana pointer
+	uintptr_t manaPointerOffset = 0x18FCD60;
+
+	// Adding offsets one by one
 	uintptr_t firstPointer = *(uintptr_t*)(PwnAventAddr + manaPointerOffset);
 	printf("PwnAventAddr + 0x18FCD60 = %p has value %p\n", PwnAventAddr + manaPointerOffset, firstPointer);
 
@@ -120,10 +119,10 @@ DWORD WINAPI MyThread(HMODULE hModule)
 
 	int* manaValue = (int*)(fourthPointer + 0xBC);
 	printf("fourthPointer + 0xBC = %p has value %d\n", fourthPointer + 0xBC, *manaValue);
-	std::cout << "mana: " << *manaValue << std::endl;
-
 	
-	//Teachers lecture
+	std::cout << "\nMana: " << *manaValue << "\n\n";
+
+	//Z coordinate hack - Tom
 	printf("PwnAventAddr: %p\n", PwnAventAddr);
 	uintptr_t firstStep = *(uintptr_t*)(PwnAventAddr + 0x18FCD60);
 	printf("PwnAventAddr + 0x18FCD60 = %p has value %p\n", PwnAventAddr + 0x18FCD60, firstStep);
@@ -136,8 +135,6 @@ DWORD WINAPI MyThread(HMODULE hModule)
 
 	float* z_coord_Address = (float*)(forthStep + 0x98);
 	float z_coord = *z_coord_Address;
-
-
 
 	// This is the main loop that will run in the background while I play the game
 	while (true) {
@@ -156,9 +153,9 @@ DWORD WINAPI MyThread(HMODULE hModule)
 
 
 	}
+
 	return 0;
 }
-//Teachers lecture done
 
 // This is the main method that runs when the DLL is injected.
 BOOL APIENTRY DllMain(HMODULE hModule,
