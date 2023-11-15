@@ -1,0 +1,23 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/.vs/ProjectSettings.json
+/.vs/pwnie-island-hack
+/.vs/pwnie-island-hack/FileContentIndex
+/.vs/pwnie-island-hack/FileContentIndex/1e6e4699-da1e-488c-a1b3-8026e9db0bb6.vsidx
+/.vs/pwnie-island-hack/v17
+/.vs/pwnie-island-hack/v17/.wsuo
+/.vs/pwnie-island-hack/v17/Browse.VC.db
+/.vs/pwnie-island-hack/v17/Browse.VC.db-shm
+/.vs/pwnie-island-hack/v17/Browse.VC.db-wal
+/.vs/pwnie-island-hack/v17/Browse.VC.opendb
+/.vs/pwnie-island-hack/v17/ipch/AutoPCH
+/.vs/pwnie-island-hack/v17/ipch/AutoPCH/302d34411e252de7
+/.vs/pwnie-island-hack/v17/ipch/AutoPCH/302d34411e252de7/DLLMAIN.ipch
+/.vs/pwnie-island-hack/v17/ipch/AutoPCH/4379d780db090106
+/.vs/pwnie-island-hack/v17/ipch/AutoPCH/4379d780db090106/SPACEINVADERS.ipch
+/.vs/slnx.sqlite
+/.vs/VSWorkspaceState.json
+/.gitignore
