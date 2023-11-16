@@ -119,7 +119,7 @@ DWORD WINAPI MyThread(HMODULE hModule)
 
 	int* manaValue = (int*)(fourthPointer + 0xBC);
 	printf("fourthPointer + 0xBC = %p has value %d\n", fourthPointer + 0xBC, *manaValue);
-	
+
 	std::cout << "\nMana: " << *manaValue << "\n\n";
 
 	//Z coordinate hack - Tom
@@ -141,13 +141,35 @@ DWORD WINAPI MyThread(HMODULE hModule)
 		// If the player z coordinate (height) changes then print it.
 		if (z_coord != *z_coord_Address) {
 			z_coord = *z_coord_Address;
-			std::cout << " Z co-ord: " << z_coord << std::endl;
+			//std::cout << " Z co-ord: " << z_coord << std::endl;
 		}
 
 		// If the player presses 'F' then add 10000 to the players heigth
 		// I.e. this makes 'F' a super jump key that will let me jump through solid objects 
 		if (GetAsyncKeyState('F') & 1) {
 			std::cout << "   F key pressed";
+
+			int mana = *(int*)LocateDirectMemoryAddress(moduleBase + 0x00097D7C, { 0x1C, 0x6c, 0xBC });
+			printf("\n mana value is %d \n", mana);
+
+			float walkspeed = *(float*)LocateDirectMemoryAddress(moduleBase + 0x00097D7C, { 0x1C, 0x6c, (0xbc + 0x64) });
+			printf("\n walkspeed value is %f \n", walkspeed);
+
+			float jumpspeed = *(float*)LocateDirectMemoryAddress(moduleBase + 0x00097D7C, { 0x1C, 0x6c, (0xbc + 0x68) });
+			printf("\n jumpspeed value is %f \n", jumpspeed);
+
+			float jumpholdtime = *(float*)LocateDirectMemoryAddress(moduleBase + 0x00097D7C, { 0x1C, 0x6c, (0xbc + 0x68 + 0x4) });
+			printf("\n jumpholdtime value is %f \n", jumpholdtime);
+
+			float xcoord = *(float*)LocateDirectMemoryAddress(moduleBase + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x90 });
+			printf("\n X-coord value is %f \n", xcoord);
+
+			float ycoord = *(float*)LocateDirectMemoryAddress(moduleBase + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x94 });
+			printf("\n Y-coord value is %f \n", ycoord);
+
+			float zcoord = *(float*)LocateDirectMemoryAddress(moduleBase + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x98 });
+			printf("\n Z-coord value is %f \n", zcoord);
+
 			*z_coord_Address = *z_coord_Address + 10000;
 		}
 
@@ -181,4 +203,3 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	}
 	return TRUE;
 }
-
