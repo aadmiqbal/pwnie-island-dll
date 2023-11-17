@@ -1,0 +1,8 @@
+spawn_actor_with_id: Function start
+spawn_actor_with_id: Addresses assigned
+spawn_actor_with_id: Memory allocated for pos and actor
+spawn_actor_with_id: Preparing Vector3 object
+spawn_actor_with_id: Vector3 object prepared
+spawn_actor_with_id: Preparing Bear object
+spawn_actor_with_id: Bear object prepared
+spawn_actor_with_id: Calling fn_spawn_actor_with_id
