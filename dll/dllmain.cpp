@@ -5,6 +5,7 @@
 #include <tlhelp32.h>
 #include <vector>
 
+
 DWORD procId = GetCurrentProcessId();
 
 // PatchByte and LocateDirectMemoryAddress Components modified from https://guidedhacking.com/threads/how-to-hack-any-game-tutorial-c-trainer-1-external.10897/
@@ -80,11 +81,69 @@ void HookCanJump() {
 	// Restore original memory protection
 	VirtualProtect((LPVOID)canJumpAddr, 5, oldProtect, &oldProtect);
 }
+// Placeholder for the runtime base address of "GameLogic.dll"
+uintptr_t runtimeBaseAddress = GetModuleBaseAddress(procId, L"GameLogic.dll");
+
+uintptr_t offset = 0x551a0; // Correct offset for Player::Chat
+
+// Calculate the actual runtime address of the Chat function
+uintptr_t chatFuncAddr = runtimeBaseAddress + offset;
+
+typedef void(__thiscall* OriginalChatFunc)(void* thisPlayer, const char* text);
+OriginalChatFunc originalChat = nullptr;
+
+// Declare a pointer-to-member function type
+typedef void(__thiscall* ChatFuncType)(const char* text);
+
+// Custom function to intercept and modify the Chat function behavior
+void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* originalText) {
+	printf(originalText);
+
+	// Compare originalText to the string "adam" using strcmp
+	if (strcmp(originalText, "spaceinvaders") == 0) {
+		printf("Space Invaders started");
+		HookCanJump();
+	}
+}
+
+
+void HookChatFunction() {
+	std::cout << "HookChatFunction: Starting." << std::endl;
+
+	// Calculate the actual runtime address of the Chat function.
+	uintptr_t actualFunctionAddress = runtimeBaseAddress + offset;
+	std::cout << "HookChatFunction: actualFunctionAddress calculated as " << std::hex << actualFunctionAddress << std::endl;
+
+	// Change memory protection to execute-read-write.
+	DWORD oldProtect;
+	VirtualProtect((LPVOID)actualFunctionAddress, 5, PAGE_EXECUTE_READWRITE, &oldProtect);
+	std::cout << "HookChatFunction: Memory protection changed to PAGE_EXECUTE_READWRITE." << std::endl;
+
+	// Calculate the relative jump distance from the Chat function to your custom function.
+	uintptr_t relativeAddress = ((uintptr_t)&MyCustomChat - actualFunctionAddress - 5);
+
+	// Write the jump instruction and the relative address to the Chat function.
+	*(uint8_t*)actualFunctionAddress = 0xE9; // JMP opcode
+	*(uintptr_t*)(actualFunctionAddress + 1) = relativeAddress;
+	std::cout << "HookChatFunction: JMP instruction written." << std::endl;
+
+	// Restore the original memory protection.
+	VirtualProtect((LPVOID)actualFunctionAddress, 5, oldProtect, &oldProtect);
+	std::cout << "HookChatFunction: Original memory protection restored." << std::endl;
+
+	// Save the original Chat function address for calling it later.
+	originalChat = (OriginalChatFunc)(actualFunctionAddress + 5);
+	std::cout << "HookChatFunction: Original Chat function address saved." << std::endl;
+}
+
 
 void InitializeHooks() {
-	HookCanJump();
-	// Any other initialization code can go here
+	HookChatFunction();
 }
+
+
+
+
 
 // This method defines a threat that will run concurrently with the game
 DWORD WINAPI MyThread(HMODULE hModule)
