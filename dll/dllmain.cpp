@@ -8,8 +8,7 @@
 
 DWORD procId = GetCurrentProcessId();
 
-std::string getLastChar(std::string s, std::string delimiter)
-{
+std::string getLastChar(std::string s, std::string delimiter) {
 	size_t pos = 0;
 	std::string token;
 
@@ -99,26 +98,26 @@ void HookCanJump() {
 }
 
 void setMana(int newManaValue) {
-	printf("PwnAventAddr: %p\n", PwnAdventAddr);
+	std::cout << "PwnAventAddr: " << PwnAdventAddr << "\n";
 
 	// Offset for the mana pointer
 	uintptr_t manaPointerOffset = 0x18FCD60;
 
 	// Adding offsets one by one
 	uintptr_t firstPointer = *(uintptr_t*)(PwnAdventAddr + manaPointerOffset);
-	printf("PwnAventAddr + 0x18FCD60 = %p has value %p\n", PwnAdventAddr + manaPointerOffset, firstPointer);
+	std::cout << "PwnAventAddr + 0x18FCD60 = " << PwnAdventAddr + manaPointerOffset << " has value " << firstPointer << "\n";
 
 	uintptr_t secondPointer = *(uintptr_t*)(firstPointer + 0x20);
-	printf("firstPointer + 0x20 = %p has value %p\n", firstPointer + 0x20, secondPointer);
+	std::cout << "firstPointer + 0x20 = " << firstPointer + 0x20 << " has value " << secondPointer << "\n";
 
 	uintptr_t thirdPointer = *(uintptr_t*)(secondPointer + 0x284);
-	printf("secondPointer + 0x284 = %p has value %p\n", secondPointer + 0x284, thirdPointer);
+	std::cout << "secondPointer + 0x284 = " << secondPointer + 0x284 << " has value " << thirdPointer << "\n";
 
 	uintptr_t fourthPointer = *(uintptr_t*)(thirdPointer + 0x3E0);
-	printf("thirdPointer + 0x3E0 = %p has value %p\n", thirdPointer + 0x3E0, fourthPointer);
+	std::cout << "thirdPointer + 0x3E0 = " << thirdPointer + 0x3E0 << " has value " << fourthPointer << "\n";
 
 	int *manaValue = (int*)(fourthPointer + 0xBC);
-	printf("fourthPointer + 0xBC = %p has value %d\n", fourthPointer + 0xBC, *manaValue);
+	std::cout << "fourthPointer + 0xBC = " << fourthPointer + 0xBC << " has value " << *manaValue << "\n";
 
 	int mana = *manaValue;
 	std::cout << "\nCurrent mana value: " << mana;
@@ -129,9 +128,19 @@ void setMana(int newManaValue) {
 
 void setWalkSpeed(float newWalkSpeed)
 {
-	float *walkSpeed = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x1C, 0x6c, (0xbc + 0x64) });
-	float walkSpeed = *walkSpeed;
-	std::cout << "\nCurrent walk speed value: " << walkSpeed;
+	//float *walkSpeed = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x1C, 0x6c, (0xbc + 0x64) });
+	
+	uintptr_t walkSpeedOffset = 0x00097D7C;
+	
+	uintptr_t firstPointer = *(uintptr_t*)(runtimeBaseAddress + walkSpeedOffset);
+	uintptr_t secondPointer = *(uintptr_t*)(firstPointer + 0x1C);
+	//printf("firstStep + 0x1C = %p has value %p\n", firstPointer + 0x20, secondPointer);
+	uintptr_t thirdPointer = *(uintptr_t*)(secondPointer + 0x6c);
+
+	float* walkSpeed = (float*)(thirdPointer + (0xbc + 0x64));
+	
+	//float walkSpeed = *walkSpeed;
+	std::cout << "\nCurrent walk speed value: " << *walkSpeed;
 
 	*walkSpeed = newWalkSpeed;
 	std::cout << "Walk speed value set to: " << newWalkSpeed << "\n\n";
@@ -140,8 +149,8 @@ void setWalkSpeed(float newWalkSpeed)
 void setJumpSpeed(float newJumpSpeed)
 {
 	float *jumpSpeed = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x1C, 0x6c, (0xbc + 0x68) });
-	float jumpSpeed = *jumpSpeed;
-	std::cout << "\nCurrent jump speed value: " << jumpSpeed;
+	//float jumpSpeed = *jumpSpeed;
+	std::cout << "\nCurrent jump speed value: " << *jumpSpeed;
 
 	*jumpSpeed = newJumpSpeed;
 	std::cout << "Jump speed value set to: " << newJumpSpeed << "\n\n";
@@ -149,8 +158,8 @@ void setJumpSpeed(float newJumpSpeed)
 
 void setXCoord(float newXCoord) {
 	float *xCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x90 });
-	float xCoord = *xCoord;
-	std::cout << "\nCurrent x coord value: " << xCoord;
+	//float xCoord = *xCoord;
+	std::cout << "\nCurrent x coord value: " << *xCoord;
 
 	*xCoord = newXCoord;
 	std::cout << "X coord set to: " << newXCoord << "\n\n";
@@ -158,8 +167,8 @@ void setXCoord(float newXCoord) {
 
 void setYCoord(float newYCoord) {
 	float *yCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x94 });
-	float yCoord = *yCoord;
-	std::cout << "\nCurrent y coord value: " << yCoord;
+	//float yCoord = *yCoord;
+	std::cout << "\nCurrent y coord value: " << *yCoord;
 
 	*yCoord = newYCoord;
 	std::cout << "Y coord set to: " << newYCoord << "\n\n";
@@ -167,11 +176,11 @@ void setYCoord(float newYCoord) {
 
 void setZCoord(float newZCoord) {
 	float *zCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x98 });
-	float zCoord = *zCoord;
-	std::cout << "\nCurrent z coord value: " << zCoord;
+	//float zCoord = *zCoord;
+	std::cout << "\nCurrent z coord value: " << *zCoord;
 
 	*zCoord = newZCoord;
-	std::cout << "Y coord set to: " << zCoord << "\n\n";
+	std::cout << "Y coord set to: " << newZCoord << "\n\n";
 }
 
 // Correct offset for Player::Chat
@@ -274,6 +283,8 @@ DWORD WINAPI MyThread(HMODULE hModule)
 	std::cout << "Process ID is: " << GetCurrentProcessId() << std::endl;
 	
 	HookChatFunction();
+
+	return 0;
 }
 
 // This is the main method that runs when the DLL is injected.
