@@ -226,7 +226,7 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 		int newManaValue = stoi(getLastChar(originalTextStr, " "));
 		setMana(newManaValue);
 	}
-	else if (originalTextStr.rfind("set mana", 0) == 0) {
+	else if (originalTextStr.rfind("set health", 0) == 0) {
 		std::cout << "Health hack started";
 		int newHealthValue = stoi(getLastChar(originalTextStr, " "));
 		setHealth(newHealthValue);
