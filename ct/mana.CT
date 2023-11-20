@@ -3,12 +3,25 @@
   <CheatEntries>
     <CheatEntry>
       <ID>3</ID>
-      <Description>"pointerscan result"</Description>
-      <LastState Value="500" RealAddress="2C5AED34"/>
+      <Description>"Mana"</Description>
       <VariableType>4 Bytes</VariableType>
       <Address>"GameLogic.dll"+00097D7C</Address>
       <Offsets>
         <Offset>BC</Offset>
+        <Offset>6C</Offset>
+        <Offset>148</Offset>
+        <Offset>10</Offset>
+        <Offset>0</Offset>
+        <Offset>4</Offset>
+      </Offsets>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>4</ID>
+      <Description>"Health"</Description>
+      <VariableType>4 Bytes</VariableType>
+      <Address>"GameLogic.dll"+00097D7C</Address>
+      <Offsets>
+        <Offset>-40</Offset>
         <Offset>6C</Offset>
         <Offset>148</Offset>
         <Offset>10</Offset>
