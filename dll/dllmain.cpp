@@ -126,20 +126,35 @@ void setMana(int newManaValue) {
 	std::cout << "Mana value set to: " << newManaValue << "\n\n";
 }
 
+void setHealth(int newHealthValue) {
+	uintptr_t healthOffset = 0x00097D7C;
+
+	uintptr_t firstPointer = *(uintptr_t*)(runtimeBaseAddress + healthOffset);
+	uintptr_t secondPointer = *(uintptr_t*)(firstPointer + 0x04);
+	uintptr_t thirdPointer = *(uintptr_t*)(secondPointer + 0x00);
+	uintptr_t fourthPointer = *(uintptr_t*)(thirdPointer + 0x10);
+	uintptr_t fifthPointer = *(uintptr_t*)(fourthPointer + 0x148);
+	uintptr_t sixthPointer = *(uintptr_t*)(fifthPointer + 0x6c);
+
+	int* healthValue = (int*)(sixthPointer - 0x40);
+	int health = *healthValue;
+
+	std::cout << "\nCurrent health value: " << health;
+
+	*healthValue = newHealthValue;
+	std::cout << "Health value set to: " << newHealthValue << "\n\n";
+}
+
 void setWalkSpeed(float newWalkSpeed)
 {
-	//float *walkSpeed = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x1C, 0x6c, (0xbc + 0x64) });
-	
 	uintptr_t walkSpeedOffset = 0x00097D7C;
 	
 	uintptr_t firstPointer = *(uintptr_t*)(runtimeBaseAddress + walkSpeedOffset);
 	uintptr_t secondPointer = *(uintptr_t*)(firstPointer + 0x1C);
-	//printf("firstStep + 0x1C = %p has value %p\n", firstPointer + 0x20, secondPointer);
 	uintptr_t thirdPointer = *(uintptr_t*)(secondPointer + 0x6c);
 
 	float* walkSpeed = (float*)(thirdPointer + (0xbc + 0x64));
 	
-	//float walkSpeed = *walkSpeed;
 	std::cout << "\nCurrent walk speed value: " << *walkSpeed;
 
 	*walkSpeed = newWalkSpeed;
@@ -149,7 +164,6 @@ void setWalkSpeed(float newWalkSpeed)
 void setJumpSpeed(float newJumpSpeed)
 {
 	float *jumpSpeed = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x1C, 0x6c, (0xbc + 0x68) });
-	//float jumpSpeed = *jumpSpeed;
 	std::cout << "\nCurrent jump speed value: " << *jumpSpeed;
 
 	*jumpSpeed = newJumpSpeed;
@@ -158,7 +172,6 @@ void setJumpSpeed(float newJumpSpeed)
 
 void setXCoord(float newXCoord) {
 	float *xCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x90 });
-	//float xCoord = *xCoord;
 	std::cout << "\nCurrent x coord value: " << *xCoord;
 
 	*xCoord = newXCoord;
@@ -167,7 +180,6 @@ void setXCoord(float newXCoord) {
 
 void setYCoord(float newYCoord) {
 	float *yCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x94 });
-	//float yCoord = *yCoord;
 	std::cout << "\nCurrent y coord value: " << *yCoord;
 
 	*yCoord = newYCoord;
@@ -176,7 +188,6 @@ void setYCoord(float newYCoord) {
 
 void setZCoord(float newZCoord) {
 	float *zCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x98 });
-	//float zCoord = *zCoord;
 	std::cout << "\nCurrent z coord value: " << *zCoord;
 
 	*zCoord = newZCoord;
@@ -214,6 +225,11 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 		std::cout << "Mana hack started";
 		int newManaValue = stoi(getLastChar(originalTextStr, " "));
 		setMana(newManaValue);
+	}
+	else if (originalTextStr.rfind("set mana", 0) == 0) {
+		std::cout << "Health hack started";
+		int newHealthValue = stoi(getLastChar(originalTextStr, " "));
+		setHealth(newHealthValue);
 	}
 	else if (originalTextStr.rfind("set walkSpeed", 0) == 0) {
 		std::cout << "Walk speed hack started";
