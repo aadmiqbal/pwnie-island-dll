@@ -202,55 +202,29 @@ uintptr_t addItemOffset = 0X51BA0;
 struct IItem {
 };
 
-typedef void(__thiscall* OriginalAddItem)(void* thisPlayer, IItem* item, int quantity, bool someBool);
+typedef bool(__thiscall* OriginalAddItem)(void* thisPlayer, IItem* item, unsigned int count, bool allowPartial);
 OriginalAddItem originalAddItem = nullptr;
 
-// Custom AddItem function that uses the resolved item address
-void __fastcall MyAddItem(void* thisPlayer, void* EDX_unused, int quantity, bool someBool) {
-	std::cout << "\nMy custom add item function initiated\n";
+bool CallAddItem(void* thisPlayer, unsigned int count, bool allowPartial) {
+	std::cout << "\nPistol addItem function initiated";
 
+	// Calculate the absolute address of AddItem.
+	uintptr_t addItemAddress = runtimeBaseAddress + addItemOffset;
+	originalAddItem = reinterpret_cast<OriginalAddItem>(addItemAddress);
+	std::cout << "\nOriginal AddItem function address: " << addItemAddress;
+
+	// Assuming LocateDirectMemoryAddress is a function that you have defined to resolve the actual item address.
 	uintptr_t dynamicItemAddress = LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x04, 0x04, 0x0, 0x0, 0x10, 0xec, 0x0 });
-	std::cout << "\nPistol item address: " << dynamicItemAddress << "\n";
+	std::cout << "\nPistol item address: " << dynamicItemAddress;
 
 	// Cast the resolved address to an IItem pointer
 	IItem* item = reinterpret_cast<IItem*>(dynamicItemAddress);
 
-	// Verify that item is valid before attempting to use it
-	if (item) {
-		originalAddItem(thisPlayer, item, quantity, someBool);
-	}
-	else {
-		std::cout << "\nItem is blank\n";
-	}
-}
+	// Cast the playerAddress to a void pointer for the call.
+	//void* thisPlayer = reinterpret_cast<void*>(thisPlayer);
 
-void HookAddItemFunction() {
-	std::cout << "\nHookAddItemFunction: Starting." << std::endl;
-
-	//Player::AddItem function address!!
-	uintptr_t actualFunctionAddress = runtimeBaseAddress + addItemOffset;
-	std::cout << "HookAddItemFunction: actualFunctionAddress calculated as " << std::hex << actualFunctionAddress << std::endl;
-
-	// Change memory protection to execute-read-write.
-	DWORD oldProtect;
-	VirtualProtect((LPVOID)actualFunctionAddress, 5, PAGE_EXECUTE_READWRITE, &oldProtect);
-	std::cout << "HookAddItemFunction: Memory protection changed to PAGE_EXECUTE_READWRITE." << std::endl;
-
-	// Calculate the relative jump distance from the original AddItem to MyAddItem.
-	intptr_t relativeJumpDistance = (intptr_t)MyAddItem - (intptr_t)actualFunctionAddress - 5;
-
-	// Write the JMP instruction to MyAddItem at the beginning of AddItem.
-	*(uint8_t*)actualFunctionAddress = 0xE9; // JMP opcode
-	*(intptr_t*)(actualFunctionAddress + 1) = relativeJumpDistance;
-	std::cout << "HookAddItemFunction: JMP instruction written." << std::endl;
-
-	// Restore the original memory protection.
-	VirtualProtect((LPVOID)actualFunctionAddress, 5, oldProtect, &oldProtect);
-	std::cout << "HookAddItemFunction: Original memory protection restored." << std::endl;
-
-	// Save the original Chat function address for calling it later.
-	originalAddItem = (OriginalAddItem)(actualFunctionAddress + 5);
-	std::cout << "HookAddItemFunction: Original addItem function address saved." << std::endl;
+	// Call the original AddItem function with the parameters.
+	return originalAddItem(thisPlayer, item, count, allowPartial);
 }
 
 // Correct offset for Player::Chat
@@ -326,7 +300,7 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 	}
 	else if (originalTextStr.rfind("get gun", 0) == 0) {
 		std::cout << "\nGun hack started";
-		HookAddItemFunction();
+		CallAddItem(thisPlayer, 1, true);
 	}
 }
 
