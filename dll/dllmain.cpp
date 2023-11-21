@@ -118,7 +118,7 @@ void setMana(int newManaValue) {
 	uintptr_t fourthPointer = *(uintptr_t*)(thirdPointer + 0x3E0);
 	std::cout << "thirdPointer + 0x3E0 = " << thirdPointer + 0x3E0 << " has value " << fourthPointer << "\n";
 
-	int *manaValue = (int*)(fourthPointer + 0xBC);
+	int* manaValue = (int*)(fourthPointer + 0xBC);
 	std::cout << "fourthPointer + 0xBC = " << fourthPointer + 0xBC << " has value " << *manaValue << "\n";
 
 	int mana = *manaValue;
@@ -150,13 +150,13 @@ void setHealth(int newHealthValue) {
 void setWalkSpeed(float newWalkSpeed)
 {
 	uintptr_t walkSpeedOffset = 0x00097D7C;
-	
+
 	uintptr_t firstPointer = *(uintptr_t*)(runtimeBaseAddress + walkSpeedOffset);
 	uintptr_t secondPointer = *(uintptr_t*)(firstPointer + 0x1C);
 	uintptr_t thirdPointer = *(uintptr_t*)(secondPointer + 0x6c);
 
 	float* walkSpeed = (float*)(thirdPointer + (0xbc + 0x64));
-	
+
 	std::cout << "\nCurrent walk speed value: " << *walkSpeed;
 
 	*walkSpeed = newWalkSpeed;
@@ -165,7 +165,7 @@ void setWalkSpeed(float newWalkSpeed)
 
 void setJumpSpeed(float newJumpSpeed)
 {
-	float *jumpSpeed = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x1C, 0x6c, (0xbc + 0x68) });
+	float* jumpSpeed = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x1C, 0x6c, (0xbc + 0x68) });
 	std::cout << "\nCurrent jump speed value: " << *jumpSpeed;
 
 	*jumpSpeed = newJumpSpeed;
@@ -173,7 +173,7 @@ void setJumpSpeed(float newJumpSpeed)
 }
 
 void setXCoord(float newXCoord) {
-	float *xCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x90 });
+	float* xCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x90 });
 	std::cout << "\nCurrent x coord value: " << *xCoord;
 
 	*xCoord = newXCoord;
@@ -181,7 +181,7 @@ void setXCoord(float newXCoord) {
 }
 
 void setYCoord(float newYCoord) {
-	float *yCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x94 });
+	float* yCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x94 });
 	std::cout << "\nCurrent y coord value: " << *yCoord;
 
 	*yCoord = newYCoord;
@@ -189,16 +189,13 @@ void setYCoord(float newYCoord) {
 }
 
 void setZCoord(float newZCoord) {
-	float *zCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x98 });
+	float* zCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x98 });
 	std::cout << "\nCurrent z coord value: " << *zCoord;
 
 	*zCoord = newZCoord;
 	std::cout << "Y coord set to: " << newZCoord << "\n\n";
 }
 
-// Original function AddItem
-typedef void(__thiscall* OriginalAddItem)(void* thisPlayer, IItem* item, uint quantity, bool someBool);
-OriginalAddItem trampolineAddItem = nullptr;
 
 // Correct offset for Player::Chat
 uintptr_t offset = 0x551a0;
@@ -221,21 +218,31 @@ uintptr_t ResolvePointerChain(uintptr_t baseAddress, const std::vector<unsigned 
 	return addr;
 }
 
-//Function AddItem
-void __fastcall MyAddItem(void* thisPlayer, void* EDX_unused, IItem* item, uint quantity, bool someBool) {
-	// Custom logic for adding an item goes here
+struct IItem {
+	// Item data members
+};
+// Original function AddItem
+typedef void(__thiscall* OriginalAddItem)(void* thisPlayer, IItem* item, int quantity, bool someBool);
+OriginalAddItem trampolineAddItem = nullptr;
 
-	// Resolve the pointer chain to get the dynamic address of the item value
+// Custom AddItem function that uses the resolved item address
+void __fastcall MyAddItem(void* thisPlayer, void* EDX_unused, int quantity, bool someBool) {
 	uintptr_t baseAddress = GetModuleBaseAddress(procId, L"GameLogic.dll");
 	std::vector<unsigned int> offsets = { 0xEC, 0x10, 0x0, 0x4, 0x4 };
-	uintptr_t itemAddress = ResolvePointerChain(baseAddress + 0x97D7C, offsets); // 0x97D7C is assumed to be the static part of the address from GameLogic.dll
+	uintptr_t dynamicItemAddress = ResolvePointerChain(baseAddress + 0x97D7C, offsets);
 
-	// Now itemAddress points to the dynamic address of the item we want to manipulate
-	// You can read or write to the memory at itemAddress as needed
+	// Cast the resolved address to an IItem pointer
+	IItem* item = reinterpret_cast<IItem*>(dynamicItemAddress);
 
-	// Call the original function if you want to preserve original behavior
-	trampolineAddItem(thisPlayer, item, quantity, someBool);
-
+	// Verify that item is valid before attempting to use it
+	if (item) {
+		// Now you can call the original AddItem function with the resolved item
+		trampolineAddItem(thisPlayer, item, quantity, someBool);
+	}
+	else {
+		// Handle the case where the item address could not be resolved
+		// This could involve logging an error, ensuring the game doesn't crash, etc.
+	}
 }
 void HookAddItemFunction() {
 	// First, we resolve the base address of the module where the AddItem function is located.
@@ -273,7 +280,7 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 	// Commands to start a hack
 	if (strcmp(originalText, "init spaceInvaders") == 0) {
 		std::cout << "Space Invaders started";
-		
+
 	}
 	else if (strcmp(originalText, "init trampoline") == 0) {
 		std::cout << "Trampoline hack started";
@@ -359,7 +366,7 @@ DWORD WINAPI MyThread(HMODULE hModule)
 
 	std::cout << "Injection worked\n";
 	std::cout << "Process ID is: " << GetCurrentProcessId() << std::endl;
-	
+
 	HookChatFunction();
 
 
