@@ -196,6 +196,120 @@ void setZCoord(float newZCoord) {
 	std::cout << "Y coord set to: " << newZCoord << "\n\n";
 }
 
+// Correct offset for Actor::GetPosition
+uintptr_t getPositionOffset = 0x16F0;
+
+struct Vector3 {
+	float x, y, z;
+};
+
+struct Bear {
+};
+
+struct Actor {
+};
+
+typedef Vector3* (__thiscall* OriginalGetPosition)(Bear* thisActor);
+OriginalGetPosition originalGetPosition = nullptr;
+
+Vector3* CallGetPosition(Bear* thisActor) {
+	std::cout << "\nGetPosition function initiated";
+
+	// Calculate the absolute address of GetPosition.
+	uintptr_t getPositionAddress = runtimeBaseAddress + getPositionOffset;
+	originalGetPosition = reinterpret_cast<OriginalGetPosition>(getPositionAddress);
+	std::cout << "\nOriginal GetPosition function address: " << std::hex << getPositionAddress;
+
+	// Call the original GetPosition function with the thisActor pointer.
+	Vector3* position = originalGetPosition(thisActor);
+	std::cout << "\nPosition address: " << position;
+
+	// Return the position pointer to be used outside this function
+	return position;
+}
+
+typedef void(__thiscall* OriginalSetPositionFunc)(Bear* thisActor, const Vector3& newPosition);
+OriginalSetPositionFunc originalSetPosition = nullptr;
+
+// Offset for Actor::SetPosition function
+uintptr_t setPositionOffset = 0x1C80;
+
+void CallSetPosition() {
+	std::cout << "\SetPosition function initiated";
+
+	// Calculate the absolute address of SetPosition.
+	uintptr_t setPositionAddress = runtimeBaseAddress + setPositionOffset;
+	originalSetPosition = reinterpret_cast<OriginalSetPositionFunc>(setPositionAddress);
+	std::cout << "\nOriginal GetPosition function address: " << std::hex << setPositionAddress;
+
+	uintptr_t bearpointer = LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x1c, 0x18c, 0x224, 0x0, 0x18, 0x38c, 0x0 });
+	Bear* bearObj = reinterpret_cast<Bear*>(bearpointer);
+	std::cout << "\nBear Pointer: " << bearpointer;
+
+	float* xCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x90 });
+	float* yCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x94 });
+
+	Vector3 modifidedPostion;
+	modifidedPostion.x = *xCoord;
+	modifidedPostion.y = *yCoord;
+	modifidedPostion.z = 5000.0f;
+
+	originalSetPosition(bearObj, modifidedPostion);
+}
+
+// Function pointer type for the original GetDisplayName method
+typedef const char* (__thiscall* OriginalGetDisplayNameFunc)(void* thisGiantRat);
+
+// Original function pointer for GetDisplayName
+OriginalGetDisplayNameFunc originalGetDisplayName = nullptr;
+
+// Custom function for GetDisplayName
+const char* __fastcall MyCustomGetDisplayName(void* thisGiantRat) {
+	std::cout << "Custom GetDisplayName logic executed\n";
+
+	// Call the original GetDisplayName method
+	const char* originalName = originalGetDisplayName(thisGiantRat);
+	std::cout << "Original rat display name: " << originalName << std::endl;
+
+	const char* modifiedName = "team 11";
+	std::cout << "Modified display name: " << modifiedName << std::endl;
+
+	return modifiedName;
+}
+
+// Function to hook the GetDisplayName method
+void HookGetDisplayNameFunction() {
+	std::cout << "HookGetDisplayNameFunction: Starting." << std::endl;
+
+	// Calculate the actual runtime address of the GiantRat::GetDisplayName function.
+	uintptr_t actualFunctionAddress = runtimeBaseAddress + 0x38370;
+	std::cout << "HookGetDisplayNameFunction: actualFunctionAddress calculated as " << std::hex << actualFunctionAddress << std::endl;
+
+	// Change memory protection to execute-read-write.
+	DWORD oldProtect;
+	VirtualProtect((LPVOID)actualFunctionAddress, 5, PAGE_EXECUTE_READWRITE, &oldProtect);
+	if (!VirtualProtect((LPVOID)actualFunctionAddress, 5, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+		std::cerr << "HookGetDisplayNameFunction: Failed to change memory protection." << std::endl;
+		return;
+	}
+
+	// Write the jump instruction and the relative address to the GetDisplayName function.
+	std::cout << "HookGetDisplayNameFunction: Writing jump instruction." << std::endl;
+	*(uint8_t*)actualFunctionAddress = 0xE9; // JMP opcode
+
+	// Calculate the relative address
+	uintptr_t relativeAddress = ((uintptr_t)&MyCustomGetDisplayName - actualFunctionAddress - 5);
+	std::cout << "HookGetDisplayNameFunction: Writing relative address." << std::endl;
+	*(uintptr_t*)(actualFunctionAddress + 1) = relativeAddress;
+
+	// Restore the original memory protection.
+	VirtualProtect((LPVOID)actualFunctionAddress, 5, oldProtect, &oldProtect);
+
+	// Save the original function pointer
+	originalGetDisplayName = (OriginalGetDisplayNameFunc)(actualFunctionAddress + 5);
+	std::cout << "HookGetDisplayNameFunction: Original GetDisplayName function address saved." << std::endl;
+}
+
 // Correct offset for Player::AddItem
 uintptr_t addItemOffset = 0X51BA0;
 
@@ -245,7 +359,7 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 	// Commands to start a hack
 	if (strcmp(originalText, "init spaceInvaders") == 0) {
 		std::cout << "Space Invaders started";
-
+		CallSetPosition();
 	}
 	else if (strcmp(originalText, "init trampoline") == 0) {
 		std::cout << "Trampoline hack started";
@@ -302,6 +416,10 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 		std::cout << "\nGun hack started";
 		CallAddItem(thisPlayer, 1, true);
 	}
+	else if (strcmp(originalText, "create rat") == 0) {
+		std::cout << "\Spwan rat hack started";
+		//HookGiantRatSpawnFunction();
+	}
 }
 
 void HookChatFunction() {
@@ -345,6 +463,7 @@ DWORD WINAPI MyThread(HMODULE hModule)
 	std::cout << "Process ID is: " << GetCurrentProcessId() << std::endl;
 
 	HookChatFunction();
+	HookGetDisplayNameFunction();
 
 	return 0;
 }
