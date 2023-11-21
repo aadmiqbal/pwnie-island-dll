@@ -196,7 +196,6 @@ void setZCoord(float newZCoord) {
 	std::cout << "Y coord set to: " << newZCoord << "\n\n";
 }
 
-
 // Correct offset for Player::Chat
 uintptr_t offset = 0x551a0;
 
@@ -221,15 +220,21 @@ uintptr_t ResolvePointerChain(uintptr_t baseAddress, const std::vector<unsigned 
 struct IItem {
 	// Item data members
 };
+
 // Original function AddItem
 typedef void(__thiscall* OriginalAddItem)(void* thisPlayer, IItem* item, int quantity, bool someBool);
 OriginalAddItem trampolineAddItem = nullptr;
 
 // Custom AddItem function that uses the resolved item address
 void __fastcall MyAddItem(void* thisPlayer, void* EDX_unused, int quantity, bool someBool) {
-	uintptr_t baseAddress = GetModuleBaseAddress(procId, L"GameLogic.dll");
+	std::cout << "\nMy custom add item function initiated\n"
+	//
+	// KANKA BURADA EKSIK SIFIRLARI KOYARAK DENENEBILIR!!!!
+	//
 	std::vector<unsigned int> offsets = { 0xEC, 0x10, 0x0, 0x4, 0x4 };
-	uintptr_t dynamicItemAddress = ResolvePointerChain(baseAddress + 0x97D7C, offsets);
+	
+	uintptr_t dynamicItemAddress = ResolvePointerChain(runtimeBaseAddress + 0x97D7C, offsets);
+	std::cout << "\nItem address: " << itemAddress << "\n";
 
 	// Cast the resolved address to an IItem pointer
 	IItem* item = reinterpret_cast<IItem*>(dynamicItemAddress);
@@ -242,13 +247,19 @@ void __fastcall MyAddItem(void* thisPlayer, void* EDX_unused, int quantity, bool
 	else {
 		// Handle the case where the item address could not be resolved
 		// This could involve logging an error, ensuring the game doesn't crash, etc.
+
+		//
+		// BURADA BIR SEY YAPACAK MIYIZ??
+		//
 	}
 }
-void HookAddItemFunction() {
-	// First, we resolve the base address of the module where the AddItem function is located.
-	uintptr_t baseAddress = GetModuleBaseAddress(procId, L"GameLogic.dll");
 
+void HookAddItemFunction() {
 	// We resolve the pointer chain to get the address of the AddItem function.
+
+	//
+	// KANKA BURASI BOS! YUKARIDAKIYLE AYNI MI OLACAK?
+	//
 	std::vector<unsigned int> offsets = { /* ... offsets from your pointer scan ... */ };
 	uintptr_t addItemAddr = ResolvePointerChain(baseAddress, offsets);
 
@@ -269,7 +280,6 @@ void HookAddItemFunction() {
 	// Restore the original memory protection.
 	VirtualProtect((LPVOID)addItemAddr, 5, oldProtect, &oldProtect);
 }
-
 
 // Custom function to intercept and modify the Chat function behavior
 void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* originalText) {
@@ -321,8 +331,8 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 		float newZCoord = stof(getLastChar(originalTextStr, " "));
 		setZCoord(newZCoord);
 	}
-	else if (originalTextStr.rfind("gun", 0) == 0) {
-		std::cout << "Z coordinate hack started";
+	else if (originalTextStr.rfind("get gun", 0) == 0) {
+		std::cout << "Gun hack started";
 		HookAddItemFunction();
 	}
 }
@@ -368,7 +378,6 @@ DWORD WINAPI MyThread(HMODULE hModule)
 	std::cout << "Process ID is: " << GetCurrentProcessId() << std::endl;
 
 	HookChatFunction();
-
 
 	return 0;
 }
