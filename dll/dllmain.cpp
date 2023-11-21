@@ -97,6 +97,8 @@ void HookCanJump() {
 	VirtualProtect((LPVOID)canJumpAddr, 5, oldProtect, &oldProtect);
 }
 
+
+
 void setMana(int newManaValue) {
 	std::cout << "PwnAventAddr: " << PwnAdventAddr << "\n";
 
@@ -194,6 +196,10 @@ void setZCoord(float newZCoord) {
 	std::cout << "Y coord set to: " << newZCoord << "\n\n";
 }
 
+// Original function AddItem
+typedef void(__thiscall* OriginalAddItem)(void* thisPlayer, IItem* item, uint quantity, bool someBool);
+OriginalAddItem trampolineAddItem = nullptr;
+
 // Correct offset for Player::Chat
 uintptr_t offset = 0x551a0;
 
@@ -205,6 +211,58 @@ OriginalChatFunc originalChat = nullptr;
 
 // Declare a pointer-to-member function type
 typedef void(__thiscall* ChatFuncType)(const char* text);
+
+uintptr_t ResolvePointerChain(uintptr_t baseAddress, const std::vector<unsigned int>& offsets) {
+	uintptr_t addr = baseAddress;
+	for (auto offset : offsets) {
+		addr = *(uintptr_t*)addr;
+		addr += offset;
+	}
+	return addr;
+}
+
+//Function AddItem
+void __fastcall MyAddItem(void* thisPlayer, void* EDX_unused, IItem* item, uint quantity, bool someBool) {
+	// Custom logic for adding an item goes here
+
+	// Resolve the pointer chain to get the dynamic address of the item value
+	uintptr_t baseAddress = GetModuleBaseAddress(procId, L"GameLogic.dll");
+	std::vector<unsigned int> offsets = { 0xEC, 0x10, 0x0, 0x4, 0x4 };
+	uintptr_t itemAddress = ResolvePointerChain(baseAddress + 0x97D7C, offsets); // 0x97D7C is assumed to be the static part of the address from GameLogic.dll
+
+	// Now itemAddress points to the dynamic address of the item we want to manipulate
+	// You can read or write to the memory at itemAddress as needed
+
+	// Call the original function if you want to preserve original behavior
+	trampolineAddItem(thisPlayer, item, quantity, someBool);
+
+}
+void HookAddItemFunction() {
+	// First, we resolve the base address of the module where the AddItem function is located.
+	uintptr_t baseAddress = GetModuleBaseAddress(procId, L"GameLogic.dll");
+
+	// We resolve the pointer chain to get the address of the AddItem function.
+	std::vector<unsigned int> offsets = { /* ... offsets from your pointer scan ... */ };
+	uintptr_t addItemAddr = ResolvePointerChain(baseAddress, offsets);
+
+	// Save the original AddItem function address.
+	trampolineAddItem = (OriginalAddItem)addItemAddr;
+
+	// Change memory protection to execute-read-write.
+	DWORD oldProtect;
+	VirtualProtect((LPVOID)addItemAddr, 5, PAGE_EXECUTE_READWRITE, &oldProtect);
+
+	// Calculate the relative jump distance from the original AddItem to MyAddItem.
+	intptr_t relativeJumpDistance = (intptr_t)MyAddItem - (intptr_t)addItemAddr - 5;
+
+	// Write the JMP instruction to MyAddItem at the beginning of AddItem.
+	*(uint8_t*)addItemAddr = 0xE9; // JMP opcode
+	*(intptr_t*)(addItemAddr + 1) = relativeJumpDistance;
+
+	// Restore the original memory protection.
+	VirtualProtect((LPVOID)addItemAddr, 5, oldProtect, &oldProtect);
+}
+
 
 // Custom function to intercept and modify the Chat function behavior
 void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* originalText) {
@@ -256,6 +314,10 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 		float newZCoord = stof(getLastChar(originalTextStr, " "));
 		setZCoord(newZCoord);
 	}
+	else if (originalTextStr.rfind("gun", 0) == 0) {
+		std::cout << "Z coordinate hack started";
+		HookAddItemFunction();
+	}
 }
 
 void HookChatFunction() {
@@ -299,6 +361,7 @@ DWORD WINAPI MyThread(HMODULE hModule)
 	std::cout << "Process ID is: " << GetCurrentProcessId() << std::endl;
 	
 	HookChatFunction();
+
 
 	return 0;
 }
