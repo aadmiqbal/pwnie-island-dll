@@ -6,7 +6,15 @@
 #include <vector>
 #include <string>
 
+// Process ID
 DWORD procId = GetCurrentProcessId();
+
+// Runtime base address of "GameLogic.dll" and "PwnAdventure3.exe"
+uintptr_t runtimeBaseAddress = GetModuleBaseAddress(procId, L"GameLogic.dll");
+uintptr_t PwnAdventAddr = (uintptr_t)GetModuleHandle(L"PwnAdventure3-Win32-Shipping.exe");
+
+const char* modifiedName = "";
+int lastHealthValue = 0;
 
 std::string getLastChar(std::string s, std::string delimiter) {
 	size_t pos = 0;
@@ -65,10 +73,6 @@ uintptr_t GetModuleBaseAddress(DWORD procId, const wchar_t* modName)
 	CloseHandle(hSnap);
 	return modBaseAddr;
 }
-
-// Placeholder for the runtime base address of "GameLogic.dll" and "PwnAdventure3.exe"
-uintptr_t runtimeBaseAddress = GetModuleBaseAddress(procId, L"GameLogic.dll");
-uintptr_t PwnAdventAddr = (uintptr_t)GetModuleHandle(L"PwnAdventure3-Win32-Shipping.exe");
 
 typedef bool(__thiscall* OriginalCanJump)(void* thisPtr);
 OriginalCanJump trampolineCanJump = nullptr;
@@ -143,6 +147,8 @@ void setHealth(int newHealthValue) {
 
 	*healthValue = newHealthValue;
 	std::cout << "Health value set to: " << newHealthValue << "\n\n";
+
+	lastHealthValue = newHealthValue;
 }
 
 void setWalkSpeed(float newWalkSpeed)
@@ -208,7 +214,6 @@ const char* __fastcall MyCustomGetDisplayName(void* thisGiantRat) {
 	const char* originalName = originalGetDisplayName(thisGiantRat);
 	std::cout << "Original rat display name: " << originalName << std::endl;
 
-	const char* modifiedName = "team 11";
 	std::cout << "Modified display name: " << modifiedName << std::endl;
 
 	return modifiedName;
@@ -423,9 +428,22 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 		std::cout << "\nGun hack started";
 		CallAddItem(thisPlayer, 1, true);
 	}
-	else if (strcmp(originalText, "create rat") == 0) {
-		std::cout << "\Spwan rat hack started";
-		//HookGiantRatSpawnFunction();
+	else if (strcmp(originalText, "set name") == 0) {
+		std::cout << "\nDisplay name hack started";
+		std::string name = getLastChar(originalText, " ");
+		modifiedName = name.c_str();
+		std::cout << "\nDisplay name set to: " << modifiedName;
+	}
+	else if (strcmp(originalText, "enable peace mode") == 0) {
+		std::cout << "\nPeace mode hack started - enable";
+		int healthValue = 1000000000000000;
+		setHealth(healthValue);
+		std::cout << "Peace mode enabled";
+	}
+	else if (strcmp(originalText, "disable peace mode") == 0) {
+		std::cout << "\nPeace mode hack started - disable";
+		setHealth(lastHealthValue);
+		std::cout << "Peace mode disabled";
 	}
 }
 
