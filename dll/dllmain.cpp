@@ -196,67 +196,65 @@ void setZCoord(float newZCoord) {
 	std::cout << "Y coord set to: " << newZCoord << "\n\n";
 }
 
+// Correct offset for Player::AddItem
+uintptr_t addItemOffset = 0X51BA0;
+
 struct IItem {
-	// Item data members
 };
 
-// Original function AddItem
 typedef void(__thiscall* OriginalAddItem)(void* thisPlayer, IItem* item, int quantity, bool someBool);
-OriginalAddItem trampolineAddItem = nullptr;
+OriginalAddItem originalAddItem = nullptr;
 
 // Custom AddItem function that uses the resolved item address
 void __fastcall MyAddItem(void* thisPlayer, void* EDX_unused, int quantity, bool someBool) {
 	std::cout << "\nMy custom add item function initiated\n";
 
 	uintptr_t dynamicItemAddress = LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x04, 0x04, 0x0, 0x0, 0x10, 0xec, 0x0 });
-	std::cout << "\nItem address: " << dynamicItemAddress << "\n";
+	std::cout << "\nPistol item address: " << dynamicItemAddress << "\n";
 
 	// Cast the resolved address to an IItem pointer
 	IItem* item = reinterpret_cast<IItem*>(dynamicItemAddress);
 
 	// Verify that item is valid before attempting to use it
 	if (item) {
-		// Now you can call the original AddItem function with the resolved item
-		trampolineAddItem(thisPlayer, item, quantity, someBool);
+		originalAddItem(thisPlayer, item, quantity, someBool);
 	}
 	else {
-		std::cout << "\nItem is blank";
+		std::cout << "\nItem is blank\n";
 	}
 }
 
 void HookAddItemFunction() {
-	std::cout << "\nHook add item function started";
+	std::cout << "\nHookAddItemFunction: Starting." << std::endl;
 
-	uintptr_t addItemAddr = LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x04, 0x04, 0x0, 0x0, 0x10, 0xec, 0x0 });
-	std::cout << "\nItem address: " << addItemAddr << "\n";
-
-	// Save the original AddItem function address.
-	trampolineAddItem = (OriginalAddItem)addItemAddr;
-	std::cout << "\nPART 1 DONE\n";
+	//Player::AddItem function address!!
+	uintptr_t actualFunctionAddress = runtimeBaseAddress + addItemOffset;
+	std::cout << "HookAddItemFunction: actualFunctionAddress calculated as " << std::hex << actualFunctionAddress << std::endl;
 
 	// Change memory protection to execute-read-write.
 	DWORD oldProtect;
-	VirtualProtect((LPVOID)addItemAddr, 5, PAGE_EXECUTE_READWRITE, &oldProtect);
-	std::cout << "\nPART 2 DONE\n";
+	VirtualProtect((LPVOID)actualFunctionAddress, 5, PAGE_EXECUTE_READWRITE, &oldProtect);
+	std::cout << "HookAddItemFunction: Memory protection changed to PAGE_EXECUTE_READWRITE." << std::endl;
 
 	// Calculate the relative jump distance from the original AddItem to MyAddItem.
-	intptr_t relativeJumpDistance = (intptr_t)MyAddItem - (intptr_t)addItemAddr - 5;
-	std::cout << "\nPART 3 DONE\n";
+	intptr_t relativeJumpDistance = (intptr_t)MyAddItem - (intptr_t)actualFunctionAddress - 5;
 
 	// Write the JMP instruction to MyAddItem at the beginning of AddItem.
-	*(uint8_t*)addItemAddr = 0xE9; // JMP opcode
-	*(intptr_t*)(addItemAddr + 1) = relativeJumpDistance;
-	std::cout << "\nPART 4 DONE!!\n";
+	*(uint8_t*)actualFunctionAddress = 0xE9; // JMP opcode
+	*(intptr_t*)(actualFunctionAddress + 1) = relativeJumpDistance;
+	std::cout << "HookAddItemFunction: JMP instruction written." << std::endl;
 
 	// Restore the original memory protection.
-	VirtualProtect((LPVOID)addItemAddr, 5, oldProtect, &oldProtect);
+	VirtualProtect((LPVOID)actualFunctionAddress, 5, oldProtect, &oldProtect);
+	std::cout << "HookAddItemFunction: Original memory protection restored." << std::endl;
+
+	// Save the original Chat function address for calling it later.
+	originalAddItem = (OriginalAddItem)(actualFunctionAddress + 5);
+	std::cout << "HookAddItemFunction: Original addItem function address saved." << std::endl;
 }
 
 // Correct offset for Player::Chat
-uintptr_t offset = 0x551a0;
-
-// Calculate the actual runtime address of the Chat function
-uintptr_t chatFuncAddr = runtimeBaseAddress + offset;
+uintptr_t chatFunctionOffset = 0x551a0;
 
 typedef void(__thiscall* OriginalChatFunc)(void* thisPlayer, const char* text);
 OriginalChatFunc originalChat = nullptr;
@@ -314,6 +312,18 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 		float newZCoord = stof(getLastChar(originalTextStr, " "));
 		setZCoord(newZCoord);
 	}
+	else if (originalTextStr.rfind("set inventory1", 0) == 0) {
+		std::cout << "Inventory 1 hack started";
+
+	}
+	else if (originalTextStr.rfind("set inventory2", 0) == 0) {
+		std::cout << "Inventory 2 hack started";
+
+	}
+	else if (originalTextStr.rfind("set inventory3", 0) == 0) {
+		std::cout << "Inventory 3 hack started";
+
+	}
 	else if (originalTextStr.rfind("get gun", 0) == 0) {
 		std::cout << "\nGun hack started";
 		HookAddItemFunction();
@@ -324,7 +334,7 @@ void HookChatFunction() {
 	std::cout << "HookChatFunction: Starting." << std::endl;
 
 	// Calculate the actual runtime address of the Chat function.
-	uintptr_t actualFunctionAddress = runtimeBaseAddress + offset;
+	uintptr_t actualFunctionAddress = runtimeBaseAddress + chatFunctionOffset;
 	std::cout << "HookChatFunction: actualFunctionAddress calculated as " << std::hex << actualFunctionAddress << std::endl;
 
 	// Change memory protection to execute-read-write.
