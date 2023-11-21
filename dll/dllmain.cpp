@@ -196,6 +196,62 @@ void setZCoord(float newZCoord) {
 	std::cout << "Y coord set to: " << newZCoord << "\n\n";
 }
 
+struct IItem {
+	// Item data members
+};
+
+// Original function AddItem
+typedef void(__thiscall* OriginalAddItem)(void* thisPlayer, IItem* item, int quantity, bool someBool);
+OriginalAddItem trampolineAddItem = nullptr;
+
+// Custom AddItem function that uses the resolved item address
+void __fastcall MyAddItem(void* thisPlayer, void* EDX_unused, int quantity, bool someBool) {
+	std::cout << "\nMy custom add item function initiated\n";
+
+	uintptr_t dynamicItemAddress = LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x04, 0x04, 0x0, 0x0, 0x10, 0xec, 0x0 });
+	std::cout << "\nItem address: " << dynamicItemAddress << "\n";
+
+	// Cast the resolved address to an IItem pointer
+	IItem* item = reinterpret_cast<IItem*>(dynamicItemAddress);
+
+	// Verify that item is valid before attempting to use it
+	if (item) {
+		// Now you can call the original AddItem function with the resolved item
+		trampolineAddItem(thisPlayer, item, quantity, someBool);
+	}
+	else {
+		std::cout << "\nItem is blank";
+	}
+}
+
+void HookAddItemFunction() {
+	std::cout << "\nHook add item function started";
+
+	uintptr_t addItemAddr = LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x04, 0x04, 0x0, 0x0, 0x10, 0xec, 0x0 });
+	std::cout << "\nItem address: " << addItemAddr << "\n";
+
+	// Save the original AddItem function address.
+	trampolineAddItem = (OriginalAddItem)addItemAddr;
+	std::cout << "\nPART 1 DONE\n";
+
+	// Change memory protection to execute-read-write.
+	DWORD oldProtect;
+	VirtualProtect((LPVOID)addItemAddr, 5, PAGE_EXECUTE_READWRITE, &oldProtect);
+	std::cout << "\nPART 2 DONE\n";
+
+	// Calculate the relative jump distance from the original AddItem to MyAddItem.
+	intptr_t relativeJumpDistance = (intptr_t)MyAddItem - (intptr_t)addItemAddr - 5;
+	std::cout << "\nPART 3 DONE\n";
+
+	// Write the JMP instruction to MyAddItem at the beginning of AddItem.
+	*(uint8_t*)addItemAddr = 0xE9; // JMP opcode
+	*(intptr_t*)(addItemAddr + 1) = relativeJumpDistance;
+	std::cout << "\nPART 4 DONE!!\n";
+
+	// Restore the original memory protection.
+	VirtualProtect((LPVOID)addItemAddr, 5, oldProtect, &oldProtect);
+}
+
 // Correct offset for Player::Chat
 uintptr_t offset = 0x551a0;
 
@@ -207,79 +263,6 @@ OriginalChatFunc originalChat = nullptr;
 
 // Declare a pointer-to-member function type
 typedef void(__thiscall* ChatFuncType)(const char* text);
-
-uintptr_t ResolvePointerChain(uintptr_t baseAddress, const std::vector<unsigned int>& offsets) {
-	uintptr_t addr = baseAddress;
-	for (auto offset : offsets) {
-		addr = *(uintptr_t*)addr;
-		addr += offset;
-	}
-	return addr;
-}
-
-struct IItem {
-	// Item data members
-};
-
-// Original function AddItem
-typedef void(__thiscall* OriginalAddItem)(void* thisPlayer, IItem* item, int quantity, bool someBool);
-OriginalAddItem trampolineAddItem = nullptr;
-
-// Custom AddItem function that uses the resolved item address
-void __fastcall MyAddItem(void* thisPlayer, void* EDX_unused, int quantity, bool someBool) {
-	std::cout << "\nMy custom add item function initiated\n"
-	//
-	// KANKA BURADA EKSIK SIFIRLARI KOYARAK DENENEBILIR!!!!
-	//
-	std::vector<unsigned int> offsets = { 0xEC, 0x10, 0x0, 0x4, 0x4 };
-	
-	uintptr_t dynamicItemAddress = ResolvePointerChain(runtimeBaseAddress + 0x97D7C, offsets);
-	std::cout << "\nItem address: " << itemAddress << "\n";
-
-	// Cast the resolved address to an IItem pointer
-	IItem* item = reinterpret_cast<IItem*>(dynamicItemAddress);
-
-	// Verify that item is valid before attempting to use it
-	if (item) {
-		// Now you can call the original AddItem function with the resolved item
-		trampolineAddItem(thisPlayer, item, quantity, someBool);
-	}
-	else {
-		// Handle the case where the item address could not be resolved
-		// This could involve logging an error, ensuring the game doesn't crash, etc.
-
-		//
-		// BURADA BIR SEY YAPACAK MIYIZ??
-		//
-	}
-}
-
-void HookAddItemFunction() {
-	// We resolve the pointer chain to get the address of the AddItem function.
-
-	//
-	// KANKA BURASI BOS! YUKARIDAKIYLE AYNI MI OLACAK?
-	//
-	std::vector<unsigned int> offsets = { /* ... offsets from your pointer scan ... */ };
-	uintptr_t addItemAddr = ResolvePointerChain(baseAddress, offsets);
-
-	// Save the original AddItem function address.
-	trampolineAddItem = (OriginalAddItem)addItemAddr;
-
-	// Change memory protection to execute-read-write.
-	DWORD oldProtect;
-	VirtualProtect((LPVOID)addItemAddr, 5, PAGE_EXECUTE_READWRITE, &oldProtect);
-
-	// Calculate the relative jump distance from the original AddItem to MyAddItem.
-	intptr_t relativeJumpDistance = (intptr_t)MyAddItem - (intptr_t)addItemAddr - 5;
-
-	// Write the JMP instruction to MyAddItem at the beginning of AddItem.
-	*(uint8_t*)addItemAddr = 0xE9; // JMP opcode
-	*(intptr_t*)(addItemAddr + 1) = relativeJumpDistance;
-
-	// Restore the original memory protection.
-	VirtualProtect((LPVOID)addItemAddr, 5, oldProtect, &oldProtect);
-}
 
 // Custom function to intercept and modify the Chat function behavior
 void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* originalText) {
@@ -332,7 +315,7 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 		setZCoord(newZCoord);
 	}
 	else if (originalTextStr.rfind("get gun", 0) == 0) {
-		std::cout << "Gun hack started";
+		std::cout << "\nGun hack started";
 		HookAddItemFunction();
 	}
 }
