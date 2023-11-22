@@ -9,8 +9,10 @@
 // Process ID
 DWORD procId = GetCurrentProcessId();
 
+// Some global variables
 const char* globalModifiedName;
 int recentHealthVal = 100;
+bool lonelinessModeEnabled = false;
 
 std::string getLastChar(std::string s, std::string delimiter) {
 	size_t pos = 0;
@@ -74,6 +76,7 @@ uintptr_t GetModuleBaseAddress(DWORD procId, const wchar_t* modName)
 uintptr_t runtimeBaseAddress = GetModuleBaseAddress(procId, L"GameLogic.dll");
 uintptr_t PwnAdventAddr = (uintptr_t)GetModuleHandle(L"PwnAdventure3-Win32-Shipping.exe");
 
+// Trampoline hack material
 typedef bool(__thiscall* OriginalCanJump)(void* thisPtr);
 OriginalCanJump trampolineCanJump = nullptr;
 
@@ -82,6 +85,7 @@ bool __fastcall MyCanJump(void* thisPtr) {
 	return 1;
 }
 
+// Hook custom jump function to the original
 void HookCanJump() {
 	HMODULE gameLogicModule = GetModuleHandle(L"GameLogic.dll");
 	uintptr_t canJumpAddr = (uintptr_t)gameLogicModule + 0x51680;
@@ -101,6 +105,9 @@ void HookCanJump() {
 	VirtualProtect((LPVOID)canJumpAddr, 5, oldProtect, &oldProtect);
 }
 
+/*
+* Mana hack material
+*/
 void setMana(int newManaValue) {
 	std::cout << "PwnAventAddr: " << PwnAdventAddr << "\n";
 
@@ -126,10 +133,14 @@ void setMana(int newManaValue) {
 	int mana = *manaValue;
 	std::cout << "\nCurrent mana value: " << mana;
 
+	// Change mana value
 	*manaValue = newManaValue;
 	std::cout << "Mana value set to: " << newManaValue << "\n\n";
 }
 
+/*
+* Health hack material
+*/
 void setHealth(int newHealthValue) {
 	uintptr_t healthOffset = 0x00097D7C;
 
@@ -152,6 +163,9 @@ void setHealth(int newHealthValue) {
 	std::cout << "\nrecentHealthVal changed to: " << recentHealthVal << "\n";
 }
 
+/*
+* Walk speed hack material
+*/
 void setWalkSpeed(float newWalkSpeed)
 {
 	uintptr_t walkSpeedOffset = 0x00097D7C;
@@ -168,8 +182,12 @@ void setWalkSpeed(float newWalkSpeed)
 	std::cout << "Walk speed value set to: " << newWalkSpeed << "\n\n";
 }
 
+/*
+* Jump speed hack material
+*/
 void setJumpSpeed(float newJumpSpeed)
 {
+	// Get the memory address of the jump speed pointer
 	float* jumpSpeed = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x1C, 0x6c, (0xbc + 0x68) });
 	std::cout << "\nCurrent jump speed value: " << *jumpSpeed;
 
@@ -177,6 +195,9 @@ void setJumpSpeed(float newJumpSpeed)
 	std::cout << "Jump speed value set to: " << newJumpSpeed << "\n\n";
 }
 
+/*
+* X Coordinate hack material
+*/
 void setXCoord(float newXCoord) {
 	float* xCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x90 });
 	std::cout << "\nCurrent x coord value: " << *xCoord;
@@ -185,6 +206,9 @@ void setXCoord(float newXCoord) {
 	std::cout << "X coord set to: " << newXCoord << "\n\n";
 }
 
+/*
+* Y Coordinate hack material
+*/
 void setYCoord(float newYCoord) {
 	float* yCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x94 });
 	std::cout << "\nCurrent y coord value: " << *yCoord;
@@ -193,6 +217,9 @@ void setYCoord(float newYCoord) {
 	std::cout << "Y coord set to: " << newYCoord << "\n\n";
 }
 
+/*
+* Z Coordinate hack material
+*/
 void setZCoord(float newZCoord) {
 	float* zCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x98 });
 	std::cout << "\nCurrent z coord value: " << *zCoord;
@@ -201,10 +228,44 @@ void setZCoord(float newZCoord) {
 	std::cout << "Y coord set to: " << newZCoord << "\n\n";
 }
 
-// Function pointer type for the original GetDisplayName method
-typedef const char* (__thiscall* OriginalGetDisplayNameFunc)(void* thisGiantRat);
+/* INVENTORY HACKS HERE!! */
 
-// Original function pointer for GetDisplayName
+/*
+* Get gun hack material
+*/
+uintptr_t addItemOffset = 0X51BA0;
+
+struct IItem {
+};
+
+typedef bool(__thiscall* OriginalAddItem)(void* thisPlayer, IItem* item, unsigned int count, bool allowPartial);
+OriginalAddItem originalAddItem = nullptr;
+
+bool CallAddItem(void* thisPlayer, unsigned int count, bool allowPartial) {
+	std::cout << "\nPistol addItem function initiated";
+
+	// Calculate the absolute address of AddItem.
+	uintptr_t addItemAddress = runtimeBaseAddress + addItemOffset;
+	originalAddItem = reinterpret_cast<OriginalAddItem>(addItemAddress);
+	std::cout << "\nOriginal AddItem function address: " << addItemAddress;
+
+	uintptr_t dynamicItemAddress = LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x04, 0x04, 0x0, 0x0, 0x10, 0xec, 0x0 });
+	std::cout << "\nPistol item address: " << dynamicItemAddress;
+
+	// Cast the resolved address to an IItem pointer
+	IItem* item = reinterpret_cast<IItem*>(dynamicItemAddress);
+
+	// Cast the playerAddress to a void pointer for the call.
+	//void* thisPlayer = reinterpret_cast<void*>(thisPlayer);
+
+	// Call the original AddItem function with the parameters.
+	return originalAddItem(thisPlayer, item, count, allowPartial);
+}
+
+/* 
+* Display name hack material 
+*/
+typedef const char* (__thiscall* OriginalGetDisplayNameFunc)(void* thisGiantRat);
 OriginalGetDisplayNameFunc originalGetDisplayName = nullptr;
 
 // Custom function for GetDisplayName
@@ -254,107 +315,9 @@ void HookGetDisplayNameFunction(uintptr_t offset) {
 	std::cout << "HookGetDisplayNameFunction: Original GetDisplayName function address saved." << std::endl;
 }
 
-// Correct offset for Player::AddItem
-uintptr_t addItemOffset = 0X51BA0;
-
-struct IItem {
-};
-
-typedef bool(__thiscall* OriginalAddItem)(void* thisPlayer, IItem* item, unsigned int count, bool allowPartial);
-OriginalAddItem originalAddItem = nullptr;
-
-bool CallAddItem(void* thisPlayer, unsigned int count, bool allowPartial) {
-	std::cout << "\nPistol addItem function initiated";
-
-	// Calculate the absolute address of AddItem.
-	uintptr_t addItemAddress = runtimeBaseAddress + addItemOffset;
-	originalAddItem = reinterpret_cast<OriginalAddItem>(addItemAddress);
-	std::cout << "\nOriginal AddItem function address: " << addItemAddress;
-
-	// Assuming LocateDirectMemoryAddress is a function that you have defined to resolve the actual item address.
-	uintptr_t dynamicItemAddress = LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x04, 0x04, 0x0, 0x0, 0x10, 0xec, 0x0 });
-	std::cout << "\nPistol item address: " << dynamicItemAddress;
-
-	// Cast the resolved address to an IItem pointer
-	IItem* item = reinterpret_cast<IItem*>(dynamicItemAddress);
-
-	// Cast the playerAddress to a void pointer for the call.
-	//void* thisPlayer = reinterpret_cast<void*>(thisPlayer);
-
-	// Call the original AddItem function with the parameters.
-	return originalAddItem(thisPlayer, item, count, allowPartial);
-}
-
-// Correct offset for Actor::GetPosition
-uintptr_t getPositionOffset = 0x16F0;
-
-struct Vector3 {
-	float x, y, z;
-};
-
-struct Bear {
-};
-
-struct Actor {
-};
-
-typedef Vector3* (__thiscall* OriginalGetPosition)(Bear* thisActor);
-OriginalGetPosition originalGetPosition = nullptr;
-
-Vector3* CallGetPosition(Bear* thisActor) {
-	std::cout << "\nGetPosition function initiated";
-
-	// Calculate the absolute address of GetPosition.
-	uintptr_t getPositionAddress = runtimeBaseAddress + getPositionOffset;
-	originalGetPosition = reinterpret_cast<OriginalGetPosition>(getPositionAddress);
-	std::cout << "\nOriginal GetPosition function address: " << std::hex << getPositionAddress;
-
-	// Call the original GetPosition function with the thisActor pointer.
-	Vector3* position = originalGetPosition(thisActor);
-	std::cout << "\nPosition address: " << position;
-
-	// Return the position pointer to be used outside this function
-	return position;
-}
-
-typedef void(__thiscall* OriginalSetPositionFunc)(Bear* thisActor, const Vector3& newPosition);
-OriginalSetPositionFunc originalSetPosition = nullptr;
-
-// Offset for Actor::SetPosition function
-uintptr_t setPositionOffset = 0x1C80;
-
-void CallSetPosition() {
-	std::cout << "\SetPosition function initiated";
-
-	// Calculate the absolute address of SetPosition.
-	uintptr_t setPositionAddress = runtimeBaseAddress + setPositionOffset;
-	originalSetPosition = reinterpret_cast<OriginalSetPositionFunc>(setPositionAddress);
-	std::cout << "\nOriginal GetPosition function address: " << std::hex << setPositionAddress;
-
-	uintptr_t bearpointer1 = LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x1c, 0x18c, 0x224, 0x0, 0x18, 0x38c, 0x0 });
-	std::cout << "\nBear Pointer 1: " << bearpointer1;
-	uintptr_t bearpointer2 = LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x1c, 0x194, 0x224, 0x0, 0x18, 0x38c });
-	std::cout << "\nBear Pointer 2: " << bearpointer2;
-
-	Bear* bearObj1 = reinterpret_cast<Bear*>(bearpointer1);
-	Bear* bearObj2 = reinterpret_cast<Bear*>(bearpointer2);
-
-	float* xCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x90 });
-	float* yCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x94 });
-
-	Vector3 modifidedPostion;
-	modifidedPostion.x = *xCoord;
-	modifidedPostion.y = *yCoord;
-	modifidedPostion.z = 5000.0f;
-
-	originalSetPosition(bearObj1, modifidedPostion);
-	originalSetPosition(bearObj2, modifidedPostion);
-}
-
-void spaceInvaders() {
-
-}
-
+/* 
+* Peace mode hack material
+*/
 void enablePeaceMode() {
 	uintptr_t healthOffset = 0x00097D7C;
 
@@ -374,7 +337,99 @@ void enablePeaceMode() {
 	std::cout << "\nHealth value set to: " << 1000000000000000;
 }
 
-// Correct offset for Player::Chat
+/* Common structures to be used in Space Invaders and Loneliness mode*/
+struct Vector3 {
+	float x, y, z;
+};
+
+struct Bear {
+};
+
+struct Actor {
+};
+
+typedef void(__thiscall* OriginalSetPositionFunc)(Bear* thisActor, const Vector3& newPosition);
+OriginalSetPositionFunc originalSetPosition = nullptr;
+
+// Offset for Actor::SetPosition function
+uintptr_t setPositionOffset = 0x1C80;
+
+// Function to call Actor::SetPosition
+void CallSetPosition(Bear* bearObj, float* xCoord, float* yCoord) {
+	std::cout << "\SetPosition function initiated";
+
+	// Calculate the absolute address of SetPosition.
+	uintptr_t setPositionAddress = runtimeBaseAddress + setPositionOffset;
+	originalSetPosition = reinterpret_cast<OriginalSetPositionFunc>(setPositionAddress);
+	std::cout << "\nOriginal GetPosition function address: " << std::hex << setPositionAddress;
+
+	//uintptr_t bearpointer2 = LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x1c, 0x194, 0x224, 0x0, 0x18, 0x38c });
+	//std::cout << "\nBear Pointer 2: " << bearpointer2;
+	//Bear* bearObj2 = reinterpret_cast<Bear*>(bearpointer2);
+
+	// Set the custom location
+	Vector3 modifidedPostion;
+	modifidedPostion.x = *xCoord;
+	modifidedPostion.y = *yCoord;
+	modifidedPostion.z = 5000.0f;
+
+	// Call the original function with custom arguments
+	originalSetPosition(bearObj, modifidedPostion);
+	//originalSetPosition(bearObj2, modifidedPostion);
+}
+
+// Throws bears up in the sky - used by both loneliness mode and Space Invaders
+void pushBears(int limit) {
+	if (lonelinessModeEnabled) {
+		std::cout << "\nScan across different bears to push them up in the sky";
+
+		int bearCounter = 0;
+		int bearLimit = 10;
+
+		if (limit != NULL)
+			bearLimit = limit;
+
+		std::cout << "\nBear limit set to: " << bearLimit;
+
+		while (bearCounter <= bearLimit) {
+			if (GetAsyncKeyState(VK_ESCAPE)) {
+				std::cout << "\nESC key presses. Quiting...\n";
+				break;
+			}
+
+			uintptr_t bearPointer1 = LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x1c, 0x18c, 0x224, 0x0, 0x18, 0x38c, 0x0 });
+			std::cout << "\nBear Pointer 1: " << bearPointer1;
+			Bear* bearObj = reinterpret_cast<Bear*>(bearPointer1);
+
+			float* xCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x90 });
+			float* yCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x94 });
+
+			std::cout << "\nCalling setPosition function for bear" << bearCounter;
+			CallSetPosition(bearObj, xCoord, yCoord);
+
+			bearCounter++;
+		}
+	}
+	else
+		std::cout << "\nLoneliness mode is not enabled.\nCurrent value: " << lonelinessModeEnabled << "\n";
+}
+
+/*
+* Space Invaders mini-game material
+*/
+void spaceInvaders() {
+	// Push 10 bears in the sky
+	lonelinessModeEnabled = true;
+	pushBears(10);
+
+	//
+}
+
+/*
+* Chat hack material
+** This is where the other hacks can be triggered by specific commands through chat
+*/
+//Offset for Player::Chat
 uintptr_t chatFunctionOffset = 0x551a0;
 
 typedef void(__thiscall* OriginalChatFunc)(void* thisPlayer, const char* text);
@@ -392,7 +447,7 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 	// Commands to start a hack
 	if (strcmp(originalText, "init spaceInvaders") == 0) {
 		std::cout << "Space Invaders started";
-		CallSetPosition();
+		spaceInvaders();
 	}
 	else if (strcmp(originalText, "init trampoline") == 0) {
 		std::cout << "Trampoline hack started";
@@ -470,8 +525,20 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 		setHealth(recentHealthVal);
 		std::cout << "Peace mode disabled";
 	}
+	else if (strcmp(originalText, "enable loneliness") == 0) {
+		std::cout << "Loneliness mode hack started - enable";
+		lonelinessModeEnabled = true;
+		pushBears(NULL);
+		std::cout << "Loneliness mode enabled";
+	}
+	else if (strcmp(originalText, "disable loneliness") == 0) {
+		std::cout << "Loneliness mode hack started - disable";
+		lonelinessModeEnabled = false;
+		std::cout << "Loneliness mode disabled";
+	}
 }
 
+// Intersept the existing chat function and execute our custom one
 void HookChatFunction() {
 	std::cout << "HookChatFunction: Starting." << std::endl;
 
