@@ -337,7 +337,7 @@ void enablePeaceMode() {
 	std::cout << "\nHealth value set to: " << 1000000000000000;
 }
 
-/* Common structures to be used in Space Invaders and Loneliness mode*/
+/* Common structures to be used in Space Invaders and Loneliness mode */
 struct Vector3 {
 	float x, y, z;
 };
@@ -361,7 +361,7 @@ void CallSetPosition(Bear* bearObj, float* xCoord, float* yCoord) {
 	// Calculate the absolute address of SetPosition.
 	uintptr_t setPositionAddress = runtimeBaseAddress + setPositionOffset;
 	originalSetPosition = reinterpret_cast<OriginalSetPositionFunc>(setPositionAddress);
-	std::cout << "\nOriginal GetPosition function address: " << std::hex << setPositionAddress;
+	std::cout << "\nOriginal SetPosition function address: " << std::hex << setPositionAddress;
 
 	//uintptr_t bearpointer2 = LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x1c, 0x194, 0x224, 0x0, 0x18, 0x38c });
 	//std::cout << "\nBear Pointer 2: " << bearpointer2;
@@ -378,59 +378,22 @@ void CallSetPosition(Bear* bearObj, float* xCoord, float* yCoord) {
 	//originalSetPosition(bearObj2, modifidedPostion);
 }
 
-struct BearPushState {
-	Bear* tmp = nullptr;
-	Bear* bearObj = nullptr;
-	int bearCounter = 0;
-	int bearLimit = 20;
-	bool isPushBearsActive = false;
-};
+// Throws bears up in the sky - used by both loneliness mode and Space Invaders
+void pushBears() {
+	std::cout << "Scan across different bears to push them up in the sky";
 
-BearPushState StartPushBears(int limit) {
-	BearPushState state;
+	// Bear object
+	uintptr_t bearPointer1 = LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x1c, 0x18c, 0x224, 0x0, 0x18, 0x38c, 0x0 });
+	std::cout << "\nBear Pointer: " << bearPointer1;
+	Bear* bearObj = reinterpret_cast<Bear*>(bearPointer1);
 
-	if (lonelinessModeEnabled) {
-		std::cout << "\nScan across different bears to push them up in the sky";
-		state.bearLimit = (limit != 0) ? limit : state.bearLimit;
-		std::cout << "\nBear limit set to: " << state.bearLimit;
-		state.isPushBearsActive = true;
-	}
-	else {
-		std::cout << "\nLoneliness mode is not enabled.\n";
-	}
+	// Player's location
+	float* xCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x90 });
+	float* yCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x94 });
 
-	return state;
-}
-
-void UpdatePushBears(BearPushState& state) {
-	if (!state.isPushBearsActive) return;
-
-	if (GetAsyncKeyState(VK_ESCAPE)) {
-		std::cout << "\nESC key pressed. Quitting...\n";
-		state.isPushBearsActive = false;
-		return;
-	}
-
-	if (state.bearCounter < state.bearLimit) {
-		// Bear object
-		uintptr_t bearPointer1 = LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x1c, 0x18c, 0x224, 0x0, 0x18, 0x38c, 0x0 });
-		std::cout << "\nBear Pointer: " << bearPointer1;
-		state.bearObj = reinterpret_cast<Bear*>(bearPointer1);
-
-		// Player's location
-		float* xCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x90 });
-		float* yCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x94 });
-
-		if (state.bearObj != state.tmp) {
-			std::cout << "\nCalling setPosition function for bear" << state.bearCounter << "\n";
-			CallSetPosition(state.bearObj, xCoord, yCoord);
-
-			state.tmp = state.bearObj;
-			state.bearCounter++;
-		}
-	}
-	else {
-		state.isPushBearsActive = false; // Finished processing
+	if (bearPointer1 != NULL)
+	{
+		CallSetPosition(bearObj, xCoord, yCoord);
 	}
 }
 
@@ -439,11 +402,10 @@ void UpdatePushBears(BearPushState& state) {
 */
 void spaceInvaders() {
 	// Push 10 bears in the sky
-	lonelinessModeEnabled = true;
-	BearPushState state = StartPushBears(10);
-	UpdatePushBears(state);
+	//lonelinessModeEnabled = true;
+	//pushBears();
 
-	//
+	// 
 }
 
 /*
@@ -546,18 +508,6 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 		setHealth(recentHealthVal);
 		std::cout << "Peace mode disabled";
 	}
-	else if (strcmp(originalText, "enable loneliness") == 0) {
-		std::cout << "Loneliness mode hack started - enable";
-		lonelinessModeEnabled = true;
-		BearPushState state = StartPushBears(NULL);
-		UpdatePushBears(state);
-		std::cout << "Loneliness mode enabled";
-	}
-	else if (strcmp(originalText, "disable loneliness") == 0) {
-		std::cout << "Loneliness mode hack started - disable";
-		lonelinessModeEnabled = false;
-		std::cout << "Loneliness mode disabled";
-	}
 }
 
 // Intersept the existing chat function and execute our custom one
@@ -602,6 +552,14 @@ DWORD WINAPI MyThread(HMODULE hModule)
 	std::cout << "Process ID is: " << GetCurrentProcessId() << std::endl;
 
 	HookChatFunction();
+
+	while (true) {
+		// Get Left Shift key and execute bear push function
+		if (GetAsyncKeyState(VK_LSHIFT)) {
+			std::cout << "\nESC key pressed...\n";
+			pushBears();
+		}
+	}
 
 	return 0;
 }
