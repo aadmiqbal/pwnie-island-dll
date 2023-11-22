@@ -262,8 +262,8 @@ bool CallAddItem(void* thisPlayer, unsigned int count, bool allowPartial) {
 	return originalAddItem(thisPlayer, item, count, allowPartial);
 }
 
-/* 
-* Display name hack material 
+/*
+* Display name hack material
 */
 typedef const char* (__thiscall* OriginalGetDisplayNameFunc)(void* thisGiantRat);
 OriginalGetDisplayNameFunc originalGetDisplayName = nullptr;
@@ -315,7 +315,7 @@ void HookGetDisplayNameFunction(uintptr_t offset) {
 	std::cout << "HookGetDisplayNameFunction: Original GetDisplayName function address saved." << std::endl;
 }
 
-/* 
+/*
 * Peace mode hack material
 */
 void enablePeaceMode() {
@@ -378,40 +378,60 @@ void CallSetPosition(Bear* bearObj, float* xCoord, float* yCoord) {
 	//originalSetPosition(bearObj2, modifidedPostion);
 }
 
-// Throws bears up in the sky - used by both loneliness mode and Space Invaders
-void pushBears(int limit) {
+struct BearPushState {
+	Bear* tmp = nullptr;
+	Bear* bearObj = nullptr;
+	int bearCounter = 0;
+	int bearLimit = 20;
+	bool isPushBearsActive = false;
+};
+
+BearPushState StartPushBears(int limit) {
+	BearPushState state;
+
 	if (lonelinessModeEnabled) {
 		std::cout << "\nScan across different bears to push them up in the sky";
+		state.bearLimit = (limit != 0) ? limit : state.bearLimit;
+		std::cout << "\nBear limit set to: " << state.bearLimit;
+		state.isPushBearsActive = true;
+	}
+	else {
+		std::cout << "\nLoneliness mode is not enabled.\n";
+	}
 
-		int bearCounter = 0;
-		int bearLimit = 10;
+	return state;
+}
 
-		if (limit != NULL)
-			bearLimit = limit;
+void UpdatePushBears(BearPushState& state) {
+	if (!state.isPushBearsActive) return;
 
-		std::cout << "\nBear limit set to: " << bearLimit;
+	if (GetAsyncKeyState(VK_ESCAPE)) {
+		std::cout << "\nESC key pressed. Quitting...\n";
+		state.isPushBearsActive = false;
+		return;
+	}
 
-		while (bearCounter <= bearLimit) {
-			if (GetAsyncKeyState(VK_ESCAPE)) {
-				std::cout << "\nESC key presses. Quiting...\n";
-				break;
-			}
+	if (state.bearCounter < state.bearLimit) {
+		// Bear object
+		uintptr_t bearPointer1 = LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x1c, 0x18c, 0x224, 0x0, 0x18, 0x38c, 0x0 });
+		std::cout << "\nBear Pointer: " << bearPointer1;
+		state.bearObj = reinterpret_cast<Bear*>(bearPointer1);
 
-			uintptr_t bearPointer1 = LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x1c, 0x18c, 0x224, 0x0, 0x18, 0x38c, 0x0 });
-			std::cout << "\nBear Pointer 1: " << bearPointer1;
-			Bear* bearObj = reinterpret_cast<Bear*>(bearPointer1);
+		// Player's location
+		float* xCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x90 });
+		float* yCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x94 });
 
-			float* xCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x90 });
-			float* yCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x94 });
+		if (state.bearObj != state.tmp) {
+			std::cout << "\nCalling setPosition function for bear" << state.bearCounter << "\n";
+			CallSetPosition(state.bearObj, xCoord, yCoord);
 
-			std::cout << "\nCalling setPosition function for bear" << bearCounter;
-			CallSetPosition(bearObj, xCoord, yCoord);
-
-			bearCounter++;
+			state.tmp = state.bearObj;
+			state.bearCounter++;
 		}
 	}
-	else
-		std::cout << "\nLoneliness mode is not enabled.\nCurrent value: " << lonelinessModeEnabled << "\n";
+	else {
+		state.isPushBearsActive = false; // Finished processing
+	}
 }
 
 /*
@@ -420,7 +440,8 @@ void pushBears(int limit) {
 void spaceInvaders() {
 	// Push 10 bears in the sky
 	lonelinessModeEnabled = true;
-	pushBears(10);
+	BearPushState state = StartPushBears(10);
+	UpdatePushBears(state);
 
 	//
 }
@@ -528,7 +549,8 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 	else if (strcmp(originalText, "enable loneliness") == 0) {
 		std::cout << "Loneliness mode hack started - enable";
 		lonelinessModeEnabled = true;
-		pushBears(NULL);
+		BearPushState state = StartPushBears(NULL);
+		UpdatePushBears(state);
 		std::cout << "Loneliness mode enabled";
 	}
 	else if (strcmp(originalText, "disable loneliness") == 0) {
