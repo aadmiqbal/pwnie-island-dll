@@ -203,7 +203,7 @@ void setXCoord(float newXCoord) {
 	std::cout << "\nCurrent x coord value: " << *xCoord;
 
 	*xCoord = newXCoord;
-	std::cout << "X coord set to: " << newXCoord << "\n\n";
+	std::cout << "\nX coord set to: " << newXCoord << "\n\n";
 }
 
 /*
@@ -214,7 +214,7 @@ void setYCoord(float newYCoord) {
 	std::cout << "\nCurrent y coord value: " << *yCoord;
 
 	*yCoord = newYCoord;
-	std::cout << "Y coord set to: " << newYCoord << "\n\n";
+	std::cout << "\nY coord set to: " << newYCoord << "\n\n";
 }
 
 /*
@@ -225,10 +225,51 @@ void setZCoord(float newZCoord) {
 	std::cout << "\nCurrent z coord value: " << *zCoord;
 
 	*zCoord = newZCoord;
-	std::cout << "Y coord set to: " << newZCoord << "\n\n";
+	std::cout << "\nZ coord set to: " << newZCoord << "\n\n";
 }
 
-/* INVENTORY HACKS HERE!! */
+/* Inventory in the game is implemented by using a tree structure. 
+** The item on the nodes will change depending on how many items you have
+*/
+
+/* 
+* Inventory 1 hack material (LEFT)
+*/
+void setInventoryLeft(int newValue) {
+	std::cout << "\nLeft inventory hack initiated";
+
+	int* inventoryValue = (int*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x4, 0x0, 0x10, 0x148, 0x6c, 0x4c, 0x0, 0x18 });
+	std::cout << "\nInventory left: " << inventoryValue;
+
+	*inventoryValue = newValue;
+	std::cout << "\nInventory value left set to: " << newValue;
+}
+
+/*
+* Inventory 2 hack material (PARENT)
+*/
+void setInventoryParent(int newValue) {
+	std::cout << "\nParent inventory hack initiated";
+
+	int* inventoryValue = (int*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x4, 0x0, 0x10, 0x148, 0x6c, 0x4c, 0x4, 0x18 });
+	std::cout << "\nInventory parent: " << inventoryValue;
+
+	*inventoryValue = newValue;
+	std::cout << "\nInventory value parent set to: " << newValue;
+}
+
+/*
+* Inventory 3 hack material (RIGHT)
+*/
+void setInventoryRight(int newValue) {
+	std::cout << "\nRight inventory hack initiated";
+
+	int* inventoryValue = (int*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x4, 0x0, 0x10, 0x148, 0x6c, 0x4c, 0x8, 0x18 });
+	std::cout << "\nInventory right: " << inventoryValue;
+
+	*inventoryValue = newValue;
+	std::cout << "\nInventory value right set to: " << newValue;
+}
 
 /*
 * Get gun hack material
@@ -471,17 +512,20 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 		float newZCoord = stof(getLastChar(originalTextStr, " "));
 		setZCoord(newZCoord);
 	}
-	else if (originalTextStr.rfind("set inventory1", 0) == 0) {
-		std::cout << "Inventory 1 hack started";
-
+	else if (originalTextStr.rfind("set inventoryLeft", 0) == 0) {
+		std::cout << "Inventory (LEFT) hack started";
+		int newQty = stoi(getLastChar(originalTextStr, " "));
+		setInventoryLeft(newQty);
 	}
-	else if (originalTextStr.rfind("set inventory2", 0) == 0) {
-		std::cout << "Inventory 2 hack started";
-
+	else if (originalTextStr.rfind("set inventoryParent", 0) == 0) {
+		std::cout << "Inventory (PARENT) hack started";
+		int newQty = stoi(getLastChar(originalTextStr, " "));
+		setInventoryParent(newQty);
 	}
-	else if (originalTextStr.rfind("set inventory3", 0) == 0) {
-		std::cout << "Inventory 3 hack started";
-
+	else if (originalTextStr.rfind("set inventoryRight", 0) == 0) {
+		std::cout << "Inventory (RIGHT) hack started";
+		int newQty = stoi(getLastChar(originalTextStr, " "));
+		setInventoryRight(newQty);
 	}
 	else if (originalTextStr.rfind("get gun", 0) == 0) {
 		std::cout << "\nGun hack started";
@@ -510,7 +554,7 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 	}
 }
 
-// Intersept the existing chat function and execute our custom one
+// Intercept the existing chat function and execute our custom one
 void HookChatFunction() {
 	std::cout << "HookChatFunction: Starting." << std::endl;
 

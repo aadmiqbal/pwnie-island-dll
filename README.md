@@ -12,7 +12,7 @@ A Windows DLL for hacking Pwnie Island 3 (https://www.pwnadventure.com/)
 
 ## Hack List
 
-Below hacks can be initiated through the chat in the game by writing the associated commands
+Below hacks can be initiated through the chat in the game by writing the associated commands:
 
 - **Mana hack (set mana <int>):** You can alter the mana value in the game
 - **Health hack (set health <int>):** You can alter your health in the game
@@ -21,15 +21,18 @@ Below hacks can be initiated through the chat in the game by writing the associa
 - **Player X Coordinate hack (set x <float>):** You can set your X coordinate to a specific value
 - **Player Y Coordinate hack (set y <float>):** You can set your Y coordinate to a specific value
 - **Player Z Coordinate hack (set z <float>):** You can set your Z coordinate to a specific value
-- **Inventory 1 hack (set inventory 1 <int>):** You can alter the quantity of the item on your 1st inventory slot
-- **Inventory 2 hack (set inventory 2 <int>):** You can alter the quantity of the item on your 2nd inventory slot
-- **Inventory 3 hack (set inventory 3 <int>):** You can alter the quantity of the item on your 3rd inventory slot
+- **Inventory left hack (set inventoryLeft <int>):** You can alter the quantity of the item in your 1st inventory slot
+- **Inventory parent hack (set inventoryParent <int>):** You can alter the quantity of the item in your 2nd inventory slot
+- **Inventory right hack (set inventoryRight <int>):** You can alter the quantity of the item in your 3rd inventory slot
 - **Get gun (get gun):** You can equipt yourself another pistol once you purchase 1 (we need the object to be created first)
+- **:** DISPLAY NAME HACK FOR BEARS
+- **:** DISPLAY NAME HACK FOR RATS
 - **Set peace mode:** By enabling the peace mode, the enemies wouldn't attack you
 - **Trampoline hack (init trampoline):** By holding the space bar you can constantly remain in the air
-**Minigame**
+
+## **Minigame**
 - **Space Invaders (init spaceInvaders):**
 
-In addition to above hack which can be trigger by user's choice, we have also implemented a hack which is hooked to the game as soon as the DLL is injected:
+In addition to above hack which can be triggered by the user's choice using the chat functionality, we have also implemented a hack which is hooked to the game as soon as the DLL is injected:
 
-**Rat Display Name hack:** Rats are the first enemies the player faces in the game and we have changed their display names to "Team 11".
+**Loneliness mode:** By pressing left SHIFT key, you can push the bear the player's facing towards to the sky
