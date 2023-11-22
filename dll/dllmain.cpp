@@ -9,8 +9,7 @@
 // Process ID
 DWORD procId = GetCurrentProcessId();
 
-const char* modifiedName = "";
-int lastHealthValue = 0;
+const char* globalModifiedName;
 
 std::string getLastChar(std::string s, std::string delimiter) {
 	size_t pos = 0;
@@ -147,8 +146,6 @@ void setHealth(int newHealthValue) {
 
 	*healthValue = newHealthValue;
 	std::cout << "\nHealth value set to: " << newHealthValue << "\n\n";
-
-	lastHealthValue = newHealthValue;
 }
 
 void setWalkSpeed(float newWalkSpeed)
@@ -214,17 +211,18 @@ const char* __fastcall MyCustomGetDisplayName(void* thisGiantRat) {
 	const char* originalName = originalGetDisplayName(thisGiantRat);
 	std::cout << "Original rat display name: " << originalName << std::endl;
 
+	const char* modifiedName = globalModifiedName;
 	std::cout << "Modified display name: " << modifiedName << std::endl;
 
 	return modifiedName;
 }
 
 // Function to hook the GetDisplayName method
-void HookGetDisplayNameFunction() {
+void HookGetDisplayNameFunction(uintptr_t offset) {
 	std::cout << "HookGetDisplayNameFunction: Starting." << std::endl;
 
 	// Calculate the actual runtime address of the GiantRat::GetDisplayName function.
-	uintptr_t actualFunctionAddress = runtimeBaseAddress + 0x38370;
+	uintptr_t actualFunctionAddress = runtimeBaseAddress + offset;
 	std::cout << "HookGetDisplayNameFunction: actualFunctionAddress calculated as " << std::hex << actualFunctionAddress << std::endl;
 
 	// Change memory protection to execute-read-write.
@@ -428,15 +426,16 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 		std::cout << "\nGun hack started";
 		CallAddItem(thisPlayer, 1, true);
 	}
-	else if (strcmp(originalText, "set name") == 0) {
-		std::cout << "\nDisplay name variable hack started";
+	else if (strcmp(originalText, "change bearDisplayName") == 0) {
+		std::cout << "\nBear Display name hack started";
 		std::string name = getLastChar(originalText, " ");
-		modifiedName = name.c_str();
-		std::cout << "\nDisplay name set to: " << modifiedName;
+		globalModifiedName = name.c_str();
+		HookGetDisplayNameFunction(0x51c0);
 	}
-	else if (strcmp(originalText, "change displayName") == 0) {
-		std::cout << "\nDisplay name hack started";
-		HookGetDisplayNameFunction();
+	else if (strcmp(originalText, "change ratDisplayName") == 0) {
+		std::cout << "\nRat Display name hack started";
+
+		HookGetDisplayNameFunction(0x38370);
 	}
 	else if (strcmp(originalText, "enable peace mode") == 0) {
 		std::cout << "\nPeace mode hack started - enable";
