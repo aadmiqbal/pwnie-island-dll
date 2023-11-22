@@ -35,4 +35,4 @@ In addition to above hack which can be triggered by the user's choice using the 
 **Loneliness mode:** By pressing left SHIFT key, you can push the bear the player's facing towards to the sky
 
 ## **Minigame**
-- **Space Invaders (init spaceInvaders):**
+- **Space Invaders (init spaceInvaders):** 
