@@ -14,7 +14,7 @@ A Windows DLL for hacking Pwnie Island 3 (https://www.pwnadventure.com/)
 
 Below hacks can be initiated through the chat in the game by writing the associated commands:
 
-- **Mana hack (set mana <int>):** You can alter the mana value in the game
+- **Mana hack (set mana {int}):** You can alter the mana value in the game
 - **Health hack (set health <int>):** You can alter your health in the game
 - **Walk Speed hack (set walkspeed <float>):** You can update your walking speed which can enable you to travel faster
 - **Jump Speed hack (set jumpspeed <float>):** You can update your jump speed which will enable you to jump higher
