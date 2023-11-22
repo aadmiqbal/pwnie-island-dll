@@ -10,6 +10,7 @@
 DWORD procId = GetCurrentProcessId();
 
 const char* globalModifiedName;
+int recentHealthVal = 100;
 
 std::string getLastChar(std::string s, std::string delimiter) {
 	size_t pos = 0;
@@ -145,7 +146,10 @@ void setHealth(int newHealthValue) {
 	std::cout << "\nCurrent health value: " << health;
 
 	*healthValue = newHealthValue;
-	std::cout << "\nHealth value set to: " << newHealthValue << "\n\n";
+	std::cout << "\nHealth value set to: " << newHealthValue;
+
+	recentHealthVal = newHealthValue;
+	std::cout << "\nrecentHealthVal changed to: " << recentHealthVal << "\n";
 }
 
 void setWalkSpeed(float newWalkSpeed)
@@ -351,6 +355,25 @@ void spaceInvaders() {
 
 }
 
+void enablePeaceMode() {
+	uintptr_t healthOffset = 0x00097D7C;
+
+	uintptr_t firstPointer = *(uintptr_t*)(runtimeBaseAddress + healthOffset);
+	uintptr_t secondPointer = *(uintptr_t*)(firstPointer + 0x04);
+	uintptr_t thirdPointer = *(uintptr_t*)(secondPointer + 0x00);
+	uintptr_t fourthPointer = *(uintptr_t*)(thirdPointer + 0x10);
+	uintptr_t fifthPointer = *(uintptr_t*)(fourthPointer + 0x148);
+	uintptr_t sixthPointer = *(uintptr_t*)(fifthPointer + 0x6c);
+
+	int* healthValue = (int*)(sixthPointer - 0x40);
+	int health = *healthValue;
+
+	std::cout << "\nCurrent health value: " << health;
+
+	*healthValue = 1000000000000000;
+	std::cout << "\nHealth value set to: " << 1000000000000000;
+}
+
 // Correct offset for Player::Chat
 uintptr_t chatFunctionOffset = 0x551a0;
 
@@ -439,13 +462,12 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 	}
 	else if (strcmp(originalText, "enable peace mode") == 0) {
 		std::cout << "\nPeace mode hack started - enable";
-		int healthValue = 1000000000000000;
-		setHealth(healthValue);
+		enablePeaceMode();
 		std::cout << "Peace mode enabled";
 	}
 	else if (strcmp(originalText, "disable peace mode") == 0) {
 		std::cout << "\nPeace mode hack started - disable";
-		setHealth(100);
+		setHealth(recentHealthVal);
 		std::cout << "Peace mode disabled";
 	}
 }
