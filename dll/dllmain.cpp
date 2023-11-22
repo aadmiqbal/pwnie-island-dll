@@ -9,10 +9,6 @@
 // Process ID
 DWORD procId = GetCurrentProcessId();
 
-// Runtime base address of "GameLogic.dll" and "PwnAdventure3.exe"
-uintptr_t runtimeBaseAddress = GetModuleBaseAddress(procId, L"GameLogic.dll");
-uintptr_t PwnAdventAddr = (uintptr_t)GetModuleHandle(L"PwnAdventure3-Win32-Shipping.exe");
-
 const char* modifiedName = "";
 int lastHealthValue = 0;
 
@@ -73,6 +69,10 @@ uintptr_t GetModuleBaseAddress(DWORD procId, const wchar_t* modName)
 	CloseHandle(hSnap);
 	return modBaseAddr;
 }
+
+// Runtime base address of "GameLogic.dll" and "PwnAdventure3.exe"
+uintptr_t runtimeBaseAddress = GetModuleBaseAddress(procId, L"GameLogic.dll");
+uintptr_t PwnAdventAddr = (uintptr_t)GetModuleHandle(L"PwnAdventure3-Win32-Shipping.exe");
 
 typedef bool(__thiscall* OriginalCanJump)(void* thisPtr);
 OriginalCanJump trampolineCanJump = nullptr;
@@ -146,7 +146,7 @@ void setHealth(int newHealthValue) {
 	std::cout << "\nCurrent health value: " << health;
 
 	*healthValue = newHealthValue;
-	std::cout << "Health value set to: " << newHealthValue << "\n\n";
+	std::cout << "\nHealth value set to: " << newHealthValue << "\n\n";
 
 	lastHealthValue = newHealthValue;
 }
@@ -429,10 +429,14 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 		CallAddItem(thisPlayer, 1, true);
 	}
 	else if (strcmp(originalText, "set name") == 0) {
-		std::cout << "\nDisplay name hack started";
+		std::cout << "\nDisplay name variable hack started";
 		std::string name = getLastChar(originalText, " ");
 		modifiedName = name.c_str();
 		std::cout << "\nDisplay name set to: " << modifiedName;
+	}
+	else if (strcmp(originalText, "change displayName") == 0) {
+		std::cout << "\nDisplay name hack started";
+		HookGetDisplayNameFunction();
 	}
 	else if (strcmp(originalText, "enable peace mode") == 0) {
 		std::cout << "\nPeace mode hack started - enable";
@@ -442,7 +446,7 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 	}
 	else if (strcmp(originalText, "disable peace mode") == 0) {
 		std::cout << "\nPeace mode hack started - disable";
-		setHealth(lastHealthValue);
+		setHealth(100);
 		std::cout << "Peace mode disabled";
 	}
 }
@@ -488,7 +492,6 @@ DWORD WINAPI MyThread(HMODULE hModule)
 	std::cout << "Process ID is: " << GetCurrentProcessId() << std::endl;
 
 	HookChatFunction();
-	HookGetDisplayNameFunction();
 
 	return 0;
 }
