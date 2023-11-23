@@ -90,6 +90,9 @@ uintptr_t GetModuleBaseAddress(DWORD procId, const wchar_t* modName)
 uintptr_t runtimeBaseAddress = GetModuleBaseAddress(procId, L"GameLogic.dll");
 uintptr_t PwnAdventAddr = (uintptr_t)GetModuleHandle(L"PwnAdventure3-Win32-Shipping.exe");
 
+uintptr_t gameAPI = runtimeBaseAddress + 0X97D80;
+
+
 // Trampoline hack material
 typedef bool(__thiscall* OriginalCanJump)(void* thisPtr);
 OriginalCanJump trampolineCanJump = nullptr;
@@ -293,6 +296,26 @@ uintptr_t addItemOffset = 0X51BA0;
 struct IItem {
 };
 
+
+uintptr_t getItemByNameOffset = 0x1DE20;
+typedef IItem* (__thiscall* OriginalGetItemByName)(void* GameAPI, const char*);
+OriginalGetItemByName originalGetItemByName = nullptr;
+
+IItem* CallGetItemByName(const char* name) {
+	std::cout << "\nCallGetItemByName function initiated";
+
+	// Calculate the absolute address of GetItemByName.
+	uintptr_t GetItemByNameAddress = runtimeBaseAddress + getItemByNameOffset;
+	originalGetItemByName = reinterpret_cast<OriginalGetItemByName>(GetItemByNameAddress);
+	std::cout << "\nOriginal GetItemByName function address: " << GetItemByNameAddress;
+
+	void* gameAPI2 = (void*)(gameAPI);
+
+	// Call the original GetItemByName function with the parameters.
+	return originalGetItemByName(gameAPI2, name);
+}
+
+
 typedef bool(__thiscall* OriginalAddItem)(void* thisPlayer, IItem* item, unsigned int count, bool allowPartial);
 OriginalAddItem originalAddItem = nullptr;
 
@@ -316,6 +339,24 @@ bool CallAddItem(void* thisPlayer, unsigned int count, bool allowPartial) {
 	// Call the original AddItem function with the parameters.
 	return originalAddItem(thisPlayer, item, count, allowPartial);
 }
+
+bool CallAddItem2(void* thisPlayer, unsigned int count, bool allowPartial, const char* itemName) {
+	std::cout << "\naddItem function initiated";
+
+	// Calculate the absolute address of AddItem.
+	uintptr_t addItemAddress = runtimeBaseAddress + addItemOffset;
+	originalAddItem = reinterpret_cast<OriginalAddItem>(addItemAddress);
+	std::cout << "\nOriginal AddItem function address: " << addItemAddress;
+
+	// Call the original AddItem function with the parameters.
+
+	IItem* item = CallGetItemByName(itemName);
+
+	return originalAddItem(thisPlayer, item, count, allowPartial);
+}
+
+
+
 
 /*
 * Display name hack material
@@ -562,6 +603,24 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 	else if (originalTextStr.rfind("get gun", 0) == 0) {
 		std::cout << "\nGun hack started";
 		CallAddItem(thisPlayer, 1, true);
+	}
+	else if (originalTextStr.rfind("get fireball", 0) == 0) {
+		std::cout << "\get fireball hack started";
+		CallAddItem2(thisPlayer, 1, true,"GreatBallsOfFire");
+	}
+	else if (originalTextStr.rfind("get pistol", 0) == 0) {
+		std::cout << "\get pistol hack started";
+		CallAddItem2(thisPlayer, 1, true, "Pistol");
+	}
+	else if (originalTextStr.rfind("get revolver", 0) == 0) {
+		std::cout << "\get revolver hack started";
+		CallAddItem2(thisPlayer, 1, true, "CowboyCoder");
+	}
+	else if (originalTextStr.rfind("get money", 0) == 0) {
+		std::cout << "\get money hack started";
+		int newQty = stoi(getLastChar(originalTextStr, " "));
+		CallAddItem2(thisPlayer, 1, true, "Coin");
+		setInventoryParent(newQty);
 	}
 	else if (originalTextStr.rfind("change bearDisplayName", 0) == 0) {
 		std::cout << "\nBear Display name hack started";
