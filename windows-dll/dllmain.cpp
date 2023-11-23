@@ -213,6 +213,19 @@ void setJumpSpeed(float newJumpSpeed)
 }
 
 /*
+* Jump hold time hack
+*/
+void setJumpHoldTime(float newJumpHoldTime)
+{
+	// Get the memory address of the jump speed pointer
+	float* jumpHoldTime = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097D7C, { 0x1C, 0x6c, (0xbc + 0x68 + 0x4) });
+	std::cout << "\nCurrent jump hold time value: " << *jumpHoldTime;
+
+	*jumpHoldTime = newJumpHoldTime;
+	std::cout << "Jump hold time value set to: " << newJumpHoldTime << "\n\n";
+}
+
+/*
 * X Coordinate hack material
 */
 void setXCoord(float newXCoord) {
@@ -550,6 +563,13 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 		std::cout << "Jump speed hack started";
 		float newJumpSpeed = stof(getLastChar(originalTextStr, " "));
 		setJumpSpeed(newJumpSpeed);
+
+	}
+	else if (originalTextStr.rfind("set jumpTime", 0) == 0) {
+		std::cout << "Jump hold time hack started";
+		float newJumpHoldTime = stof(getLastChar(originalTextStr, " "));
+		setJumpHoldTime(newJumpHoldTime);
+
 	}
 	else if (originalTextStr.rfind("set x", 0) == 0) {
 		std::cout << "X coordinate hack started";
@@ -606,7 +626,7 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 	}
 	else if (originalTextStr.rfind("get fireball", 0) == 0) {
 		std::cout << "\get fireball hack started";
-		CallAddItem2(thisPlayer, 1, true,"GreatBallsOfFire");
+		CallAddItem2(thisPlayer, 1, true, "GreatBallsOfFire");
 	}
 	else if (originalTextStr.rfind("get pistol", 0) == 0) {
 		std::cout << "\get pistol hack started";
@@ -692,7 +712,7 @@ DWORD WINAPI MyThread(HMODULE hModule)
 	while (true) {
 		// Get Left Shift key and execute bear push function
 		if (GetAsyncKeyState(VK_LSHIFT)) {
-			std::cout << "\nESC key pressed...\n";
+			std::cout << "\nLSHIFT key pressed...\n";
 			pushBears();
 		}
 	}
