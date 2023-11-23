@@ -5,12 +5,14 @@
 #include <tlhelp32.h>
 #include <vector>
 #include <string>
+#include <sstream>
 
 // Process ID
 DWORD procId = GetCurrentProcessId();
 
 // Some global variables
-const char* globalModifiedName;
+std::string globalModifiedName;
+
 int recentHealthVal = 100;
 bool lonelinessModeEnabled = false;
 
@@ -25,6 +27,18 @@ std::string getLastChar(std::string s, std::string delimiter) {
 	}
 
 	return s;
+}
+
+std::vector<std::string> splitStringByComma(const std::string& str) {
+	std::vector<std::string> result;
+	std::stringstream ss(str);
+	std::string item;
+
+	while (std::getline(ss, item, ',')) {
+		result.push_back(item);
+	}
+
+	return result;
 }
 
 // PatchByte and LocateDirectMemoryAddress Components modified from https://guidedhacking.com/threads/how-to-hack-any-game-tutorial-c-trainer-1-external.10897/
@@ -228,11 +242,11 @@ void setZCoord(float newZCoord) {
 	std::cout << "\nZ coord set to: " << newZCoord << "\n\n";
 }
 
-/* Inventory in the game is implemented by using a tree structure. 
+/* Inventory in the game is implemented by using a tree structure.
 ** The item on the nodes will change depending on how many items you have
 */
 
-/* 
+/*
 * Inventory 1 hack material (LEFT)
 */
 void setInventoryLeft(int newValue) {
@@ -317,7 +331,7 @@ const char* __fastcall MyCustomGetDisplayName(void* thisGiantRat) {
 	const char* originalName = originalGetDisplayName(thisGiantRat);
 	std::cout << "Original rat display name: " << originalName << std::endl;
 
-	const char* modifiedName = globalModifiedName;
+	const char* modifiedName = globalModifiedName.c_str();
 	std::cout << "Modified display name: " << modifiedName << std::endl;
 
 	return modifiedName;
@@ -442,11 +456,10 @@ void pushBears() {
 * Space Invaders mini-game material
 */
 void spaceInvaders() {
-	// Push 10 bears in the sky
-	//lonelinessModeEnabled = true;
-	//pushBears();
-
-	// 
+	// Change bear names to space invaders
+	std::cout << "\nSpace Invaders game initiated" << std::endl;
+	globalModifiedName = "space invaders";
+	HookGetDisplayNameFunction(0x51c0);
 }
 
 /*
@@ -512,6 +525,25 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 		float newZCoord = stof(getLastChar(originalTextStr, " "));
 		setZCoord(newZCoord);
 	}
+	else if (originalTextStr.rfind("set tp ", 0) == 0) {
+		std::cout << "Location hack started";
+		std::string position = getLastChar(originalTextStr, " ");
+		std::vector<std::string> splitStrings = splitStringByComma(position);
+
+		int i = 0;
+		for (const auto& s : splitStrings) {
+			std::cout << "Element " << i << ": " << s << std::endl;
+
+			if (i == 0)
+				setXCoord(stof(s));
+			else if (i == 1)
+				setYCoord(stof(s));
+			else if (i == 2)
+				setZCoord(stof(s));
+
+			i++;
+		}
+	}
 	else if (originalTextStr.rfind("set inventoryLeft", 0) == 0) {
 		std::cout << "Inventory (LEFT) hack started";
 		int newQty = stoi(getLastChar(originalTextStr, " "));
@@ -531,15 +563,16 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 		std::cout << "\nGun hack started";
 		CallAddItem(thisPlayer, 1, true);
 	}
-	else if (strcmp(originalText, "change bearDisplayName") == 0) {
+	else if (originalTextStr.rfind("change bearDisplayName", 0) == 0) {
 		std::cout << "\nBear Display name hack started";
 		std::string name = getLastChar(originalText, " ");
-		globalModifiedName = name.c_str();
+		globalModifiedName = name;
 		HookGetDisplayNameFunction(0x51c0);
 	}
-	else if (strcmp(originalText, "change ratDisplayName") == 0) {
+	else if (originalTextStr.rfind("change ratDisplayName", 0) == 0) {
 		std::cout << "\nRat Display name hack started";
-
+		std::string name = getLastChar(originalText, " ");
+		globalModifiedName = name;
 		HookGetDisplayNameFunction(0x38370);
 	}
 	else if (strcmp(originalText, "enable peace mode") == 0) {
