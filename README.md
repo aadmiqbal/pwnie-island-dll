@@ -26,9 +26,9 @@ Below hacks can be initiated through the chat in the game by writing the associa
 - **Inventory parent hack (set inventoryParent {int}):** You can alter the quantity of the item in your 2nd inventory slot
 - **Inventory right hack (set inventoryRight {int}):** You can alter the quantity of the item in your 3rd inventory slot
 - **Get gun (get gun):** You can equipt yourself another pistol once you purchase 1 (we need the object to be created first)
-- **Change bears' display name hack (change bearDisplayName {newName}:)** You can change the display name of the bears in the game 
-- **Change bears' display name hack (change ratDisplayName {newName}:)** You can change the display name of the rats in the game 
-- **Set peace mode:** By enabling the peace mode, the enemies wouldn't attack you
+- **Change bears' display name hack (change bearDisplayName {newName}):** You can change the display name of the bears in the game 
+- **Change bears' display name hack (change ratDisplayName {newName}):** You can change the display name of the rats in the game 
+- **Set peace mode ({enable peace mode}/"{disable peace mode}"):** By enabling the peace mode, the enemies wouldn't attack you
 - **Trampoline hack (init trampoline):** By holding the space bar you can constantly remain in the air
 - **Get fireball hack (get fireball):** Gives the player GreatBallsOfFire
 - **Get pistol hack (get pistol):** Gives the player a Pistol
