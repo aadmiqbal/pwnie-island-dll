@@ -29,7 +29,7 @@ Below hacks can be initiated through the chat in the game by writing the associa
 - **Change bears' display name hack (change bearDisplayName {newName}):** You can change the display name of the bears in the game 
 - **Change rats' display name hack (change ratDisplayName {newName}):** You can change the display name of the rats in the game 
 - **Set peace mode ({enable peace mode}/"{disable peace mode}"):** By enabling the peace mode, the enemies wouldn't attack you
-- **Trampoline hack (init trampoline):** By holding the space bar you can constantly remain in the air
+- **Trampoline hack (init trampoline):** You can jump at any time and so can remain in the air by infinitely pressing the space bar
 - **Get fireball hack (get fireball):** Gives the player GreatBallsOfFire
 - **Get pistol hack (get pistol):** Gives the player a Pistol
 - **Get revolver hack (get revolver):** Gives the player a CowboyCoder
