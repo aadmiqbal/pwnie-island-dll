@@ -21,12 +21,13 @@ Below hacks can be initiated through the chat in the game by writing the associa
 - **Player X Coordinate hack (set x {float}):** You can set your X coordinate to a specific value
 - **Player Y Coordinate hack (set y {float}):** You can set your Y coordinate to a specific value
 - **Player Z Coordinate hack (set z {float}):** You can set your Z coordinate to a specific value
+- **Teleport hack (set tp {float},{float},{float}):** You can teleport to a specific position by passing the coordinates seperated with a comma
 - **Inventory left hack (set inventoryLeft {int}):** You can alter the quantity of the item in your 1st inventory slot
 - **Inventory parent hack (set inventoryParent {int}):** You can alter the quantity of the item in your 2nd inventory slot
 - **Inventory right hack (set inventoryRight {int}):** You can alter the quantity of the item in your 3rd inventory slot
 - **Get gun (get gun):** You can equipt yourself another pistol once you purchase 1 (we need the object to be created first)
-- **:** DISPLAY NAME HACK FOR BEARS
-- **:** DISPLAY NAME HACK FOR RATS
+- **Change bears' display name hack (change bearDisplayName {newName}:)** You can change the display name of the bears in the game 
+- **Change bears' display name hack (change ratDisplayName {newName}:)** You can change the display name of the rats in the game 
 - **Set peace mode:** By enabling the peace mode, the enemies wouldn't attack you
 - **Trampoline hack (init trampoline):** By holding the space bar you can constantly remain in the air
 
@@ -35,4 +36,4 @@ In addition to above hack which can be triggered by the user's choice using the 
 **Loneliness mode:** By pressing left SHIFT key, you can push the bear the player's facing towards to the sky
 
 ## **Minigame**
-- **Space Invaders (init spaceInvaders):** 
+- **Space Invaders (init spaceInvaders):** This is a mini-game where the bear's you have chosen are being thrown to the sky (use the LSHIFT key) and their gravity is hacked so they can't fall down. You can use your guns to shoot at them and kill them. Bears can run away and it's the challange of the game. Once the game is initiated, the display name of the bears are set to 'space invaders'
