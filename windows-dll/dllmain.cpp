@@ -16,6 +16,8 @@ std::string globalModifiedName;
 int recentHealthVal = 100;
 bool lonelinessModeEnabled = false;
 
+bool coordControl = false;
+
 std::string getLastChar(std::string s, std::string delimiter) {
 	size_t pos = 0;
 	std::string token;
@@ -237,6 +239,25 @@ void setXCoord(float newXCoord) {
 }
 
 /*
+*increase X Coordinate hack
+*/
+void increaseXCoord() {
+	float* xCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x90 });
+	*xCoord += 1.0f;
+}
+
+
+/*
+*decrease X Coordinate hack
+*/
+void decreaseXCoord() {
+	float* xCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x90 });
+	*xCoord -= 1.0f;
+}
+
+
+
+/*
 * Y Coordinate hack material
 */
 void setYCoord(float newYCoord) {
@@ -248,6 +269,23 @@ void setYCoord(float newYCoord) {
 }
 
 /*
+* increase Y Coordinate hack
+*/
+void increaseYCoord() {
+	float* yCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x94 });
+	*yCoord +=1;
+}
+
+/*
+* decrease Y Coordinate hack
+*/
+void decreaseYCoord() {
+	float* yCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x94 });
+	*yCoord -= 1;
+}
+
+
+/*
 * Z Coordinate hack material
 */
 void setZCoord(float newZCoord) {
@@ -257,6 +295,23 @@ void setZCoord(float newZCoord) {
 	*zCoord = newZCoord;
 	std::cout << "\nZ coord set to: " << newZCoord << "\n\n";
 }
+
+/*
+* increase Z Coordinate hack 
+*/
+void increaseZCoord() {
+	float* zCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x98 });
+	*zCoord +=1;
+}
+
+/*
+* decrease Z Coordinate hack
+*/
+void decreaseZCoord() {
+	float* zCoord = (float*)LocateDirectMemoryAddress(runtimeBaseAddress + 0x00097E1C, { 0x24, 0xc, 0xf8, 0x18, 0x2fc, 0x280, 0x98 });
+	*zCoord -= 1;
+}
+
 
 /* Inventory in the game is implemented by using a tree structure.
 ** The item on the nodes will change depending on how many items you have
@@ -586,6 +641,10 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 		float newZCoord = stof(getLastChar(originalTextStr, " "));
 		setZCoord(newZCoord);
 	}
+	else if (originalTextStr.rfind("coordControl", 0) == 0) {
+		std::cout << "coordControl hack toggled";
+		coordControl = !coordControl;
+	}
 	else if (originalTextStr.rfind("set tp ", 0) == 0) {
 		std::cout << "Location hack started";
 		std::string position = getLastChar(originalTextStr, " ");
@@ -712,8 +771,34 @@ DWORD WINAPI MyThread(HMODULE hModule)
 	while (true) {
 		// Get Left Shift key and execute bear push function
 		if (GetAsyncKeyState(VK_LSHIFT)) {
-			std::cout << "\nLSHIFT key pressed...\n";
+			std::cout << "\n LSHIFT key pressed\n";
 			pushBears();
+		}
+		if (coordControl) {
+			if (GetAsyncKeyState('T')) {
+				std::cout << "\n T key pressed\n";
+				increaseXCoord();
+			}
+			if (GetAsyncKeyState('Y')) {
+				std::cout << "\n Y key pressed\n";
+				increaseYCoord();
+			}
+			if (GetAsyncKeyState('U')) {
+				std::cout << "\n U key pressed\n";
+				increaseZCoord();
+			}
+			if (GetAsyncKeyState('F')) {
+				std::cout << "\n F key pressed\n";
+				decreaseXCoord();
+			}
+			if (GetAsyncKeyState('G')) {
+				std::cout << "\n G key pressed\n";
+				decreaseYCoord();
+			}
+			if (GetAsyncKeyState('H')) {
+				std::cout << "\n H key pressed\n";
+				decreaseZCoord();
+			}
 		}
 	}
 
