@@ -34,7 +34,9 @@ Below hacks can be initiated through the chat in the game by writing the associa
 - **Get pistol hack (get pistol):** Gives the player a Pistol
 - **Get revolver hack (get revolver):** Gives the player a CowboyCoder
 - **Get money hack (get money {int}):** Gives the player the integer quanity of pwncoins specified
-- **Jump Time hack (set jumpTime {float}):** You can update your jump hold time which will enable you to jump for longer 
+- **Jump Time hack (set jumpTime {float}):** You can update your jump hold time which will enable you to jump for longer
+- **Coordinate Control hack (coordControl):** can toggle on or off with "coordControl" command to enable holding keyboard keys to change coordinates directly: increase x (T), decrease x (F), increase y (Y), decrease y (G), increase z (U), decrease z (H). Makes traversal and flying around faster.
+
 
 
 In addition to above hack which can be triggered by the user's choice using the chat functionality, we have also implemented a hack which is hooked to the game as soon as the DLL is injected:
