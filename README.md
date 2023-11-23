@@ -30,6 +30,11 @@ Below hacks can be initiated through the chat in the game by writing the associa
 - **Change bears' display name hack (change ratDisplayName {newName}:)** You can change the display name of the rats in the game 
 - **Set peace mode:** By enabling the peace mode, the enemies wouldn't attack you
 - **Trampoline hack (init trampoline):** By holding the space bar you can constantly remain in the air
+- **Get fireball hack (get fireball):** Gives the player GreatBallsOfFire
+- **Get pistol hack (get pistol):** Gives the player a Pistol
+- **Get revolver hack (get revolver):** Gives the player a CowboyCoder
+- **Get money hack (get money {int}):** Gives the player the integer quanity of pwncoins specified
+
 
 In addition to above hack which can be triggered by the user's choice using the chat functionality, we have also implemented a hack which is hooked to the game as soon as the DLL is injected:
 
