@@ -423,9 +423,6 @@ bool CallAddItem2(void* thisPlayer, unsigned int count, bool allowPartial, const
 	return originalAddItem(thisPlayer, item, count, allowPartial);
 }
 
-
-
-
 /*
 * Display name hack material
 */
@@ -520,7 +517,7 @@ uintptr_t setPositionOffset = 0x1C80;
 
 // Function to call Actor::SetPosition
 void CallSetPosition(Bear* bearObj, float* xCoord, float* yCoord) {
-	std::cout << "\SetPosition function initiated";
+	std::cout << "\nSetPosition function initiated";
 
 	// Calculate the absolute address of SetPosition.
 	uintptr_t setPositionAddress = runtimeBaseAddress + setPositionOffset;
@@ -684,19 +681,19 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 		CallAddItem(thisPlayer, 1, true);
 	}
 	else if (originalTextStr.rfind("get fireball", 0) == 0) {
-		std::cout << "\get fireball hack started";
+		std::cout << "\nGet fireball hack started";
 		CallAddItem2(thisPlayer, 1, true, "GreatBallsOfFire");
 	}
 	else if (originalTextStr.rfind("get pistol", 0) == 0) {
-		std::cout << "\get pistol hack started";
+		std::cout << "\nGet pistol hack started";
 		CallAddItem2(thisPlayer, 1, true, "Pistol");
 	}
 	else if (originalTextStr.rfind("get revolver", 0) == 0) {
-		std::cout << "\get revolver hack started";
+		std::cout << "\nGet revolver hack started";
 		CallAddItem2(thisPlayer, 1, true, "CowboyCoder");
 	}
 	else if (originalTextStr.rfind("get money", 0) == 0) {
-		std::cout << "\get money hack started";
+		std::cout << "\nGet money hack started";
 		int newQty = stoi(getLastChar(originalTextStr, " "));
 		CallAddItem2(thisPlayer, 1, true, "Coin");
 		setInventoryParent(newQty);
