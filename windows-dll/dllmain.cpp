@@ -642,6 +642,24 @@ void __fastcall MyCustomChat(void* thisPlayer, ChatFuncType func, const char* or
 		std::cout << "coordControl hack toggled";
 		coordControl = !coordControl;
 	}
+	else if (originalTextStr.rfind("tp bear", 0) == 0) {
+		std::cout << "bear quest hack toggled";
+		setXCoord(-7969.634766);
+		setYCoord(63891.65234);
+		setZCoord(2700);
+	}
+	else if (originalTextStr.rfind("tp house", 0) == 0) {
+		std::cout << "house quest hack toggled";
+		setXCoord(-41096.36328);
+		setYCoord(-16556.55273);
+		setZCoord(2400);
+	}
+	else if (originalTextStr.rfind("tp fort", 0) == 0) {
+		std::cout << "fort quest hack toggled";
+		setXCoord(-14638.12109);
+		setYCoord(-6318.598633);
+		setZCoord(2300);
+	}
 	else if (originalTextStr.rfind("set tp ", 0) == 0) {
 		std::cout << "Location hack started";
 		std::string position = getLastChar(originalTextStr, " ");
