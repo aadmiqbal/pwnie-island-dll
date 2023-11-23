@@ -22,6 +22,7 @@ Below hacks can be initiated through the chat in the game by writing the associa
 - **Player Y Coordinate hack (set y {float}):** You can set your Y coordinate to a specific value
 - **Player Z Coordinate hack (set z {float}):** You can set your Z coordinate to a specific value
 - **Teleport hack (set tp {float},{float},{float}):** You can teleport to a specific position by passing the coordinates seperated with a comma
+- **Quest Hack (tp {questName}):** transport to a quest by typing the name of it after the 'tp' command
 - **Inventory left hack (set inventoryLeft {int}):** You can alter the quantity of the item in your 1st inventory slot
 - **Inventory parent hack (set inventoryParent {int}):** You can alter the quantity of the item in your 2nd inventory slot
 - **Inventory right hack (set inventoryRight {int}):** You can alter the quantity of the item in your 3rd inventory slot
@@ -36,7 +37,6 @@ Below hacks can be initiated through the chat in the game by writing the associa
 - **Get money hack (get money {int}):** Gives the player the integer quanity of pwncoins specified
 - **Jump Time hack (set jumpTime {float}):** You can update your jump hold time which will enable you to jump for longer
 - **Coordinate Control hack (coordControl):** can toggle on or off with "coordControl" command to enable holding keyboard keys to change coordinates directly: increase x (T), decrease x (F), increase y (Y), decrease y (G), increase z (U), decrease z (H). Makes traversal and flying around faster.
-- **Quest Hack:** transport to the house quest, bear quest, and fort blox quest by pressing the H, B, and F keys, respectively
 
 
 
